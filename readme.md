@@ -1,0 +1,1 @@
+EtsyAccess is .NET wrapper around [Etsy API] (https://www.etsy.com/developers/documentation/)

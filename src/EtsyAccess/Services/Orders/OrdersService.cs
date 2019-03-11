@@ -7,7 +7,7 @@ namespace EtsyAccess.Services.Orders
 {
 	public class OrdersService : BaseService, IOrdersService
 	{
-		public OrdersService( string applicationKey, string sharedSecret ) : base( applicationKey, sharedSecret )
+		public OrdersService( string accessToken ) : base( accessToken )
 		{ }
 
 		public IEnumerable< T > GetOrders< T >( DateTime startDate, DateTime endDate )

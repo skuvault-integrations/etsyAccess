@@ -6,13 +6,12 @@ namespace EtsyAccess.Services
 {
 	public class BaseService
 	{
-		private readonly string _applicationKey;
-		private readonly string _sharedSecret;
+		private readonly string _accessToken;
+		private const string BaseApiUrl = "https://openapi.etsy.com/v2";
 
-		public BaseService( string applicationKey, string sharedSecret )
+		public BaseService( string accessToken )
 		{
-			_applicationKey = applicationKey;
-			_sharedSecret = sharedSecret;
+			_accessToken = accessToken;
 		}
 	}
 }

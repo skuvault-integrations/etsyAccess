@@ -1,12 +1,12 @@
 ﻿using System;
 using EtsyAccess;
+using EtsyAccess.Services.Authentication;
 using EtsyAccess.Services.Items;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using EtsyAccess.Services.Orders;
+using NUnit.Framework;
 
 namespace EtsyAccessTests
 {
-	[TestClass]
 	public class BaseTest
 	{
 		private const string ApplicationKey = "hmmvy1sp7fqfz43d4z6c117l";
@@ -14,13 +14,15 @@ namespace EtsyAccessTests
 
 		protected IOrdersService OrdersService { get; set; }
 		protected IItemsService ItemsService { get; set; }
+		protected IAuthenticationService AuthenticationService { get; set; }
 
-		[TestMethod]
+		[ SetUp ]
 		public void Init()
 		{
-			var factory = new EtsyServicesFactory( ApplicationKey, SharedSecret );
+			var factory = new EtsyServicesFactory();
 
 			OrdersService = factory.CreateOrdersService();
+			AuthenticationService = factory.CreateAuthenticationService( ApplicationKey, SharedSecret );
 		}
 	}
 }

@@ -9,8 +9,8 @@ namespace EtsyAccess
 {
 	public interface IEtsyServicesFactory
 	{
-		IAuthenticationService CreateAuthenticationService( string applicationKey, string sharedSecret );
-		IOrdersService CreateOrdersService();
+		IAuthenticationService CreateAuthenticationService();
+		IOrdersService CreateOrdersService( string token, string tokenSecret );
 		IItemsService CreateItemsService();
 	}
 }

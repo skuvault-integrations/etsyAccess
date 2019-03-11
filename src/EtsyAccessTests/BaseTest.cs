@@ -12,6 +12,9 @@ namespace EtsyAccessTests
 		private const string ApplicationKey = "hmmvy1sp7fqfz43d4z6c117l";
 		private const string SharedSecret = "airddqdp3t";
 
+		private const string Token = "3168607b820c492e24d0b2f46abd96";
+		private const string TokenSecret = "8a53e2e484";
+
 		protected IOrdersService OrdersService { get; set; }
 		protected IItemsService ItemsService { get; set; }
 		protected IAuthenticationService AuthenticationService { get; set; }
@@ -19,10 +22,10 @@ namespace EtsyAccessTests
 		[ SetUp ]
 		public void Init()
 		{
-			var factory = new EtsyServicesFactory();
+			var factory = new EtsyServicesFactory( ApplicationKey, SharedSecret );
 
-			OrdersService = factory.CreateOrdersService();
-			AuthenticationService = factory.CreateAuthenticationService( ApplicationKey, SharedSecret );
+			OrdersService = factory.CreateOrdersService( Token, TokenSecret );
+			AuthenticationService = factory.CreateAuthenticationService();
 		}
 	}
 }

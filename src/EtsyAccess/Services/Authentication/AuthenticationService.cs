@@ -40,6 +40,7 @@ namespace EtsyAccess.Services.Authentication
 		private readonly string _sharedSecret;
 
 		private readonly HttpClient _httpClient;
+		private readonly OAuthenticator _authenticator;
 
 		public AuthenticationService(string applicationKey, string sharedSecret)
 		{
@@ -50,6 +51,8 @@ namespace EtsyAccess.Services.Authentication
 			{
 				BaseAddress = new Uri(BaseUrl)
 			};
+
+			_authenticator = new OAuthenticator( applicationKey, sharedSecret );
 		}
 
 		/// <summary>
@@ -66,8 +69,9 @@ namespace EtsyAccess.Services.Authentication
 				new KeyValuePair<string, string>("oauth_verifier", verifierCode),
 			};
 
-			var oauthParameters = GetOAuthRequestParameters(BaseUrl + AccessTokenUrl, "GET", temporaryTokenSecret, requestParameters);
-			string url = GetUrl(AccessTokenUrl, oauthParameters);
+			string absoluteUrl = BaseUrl + AccessTokenUrl;
+			var oauthParameters = _authenticator.GetOAuthRequestParameters(absoluteUrl, "GET", temporaryTokenSecret, requestParameters);
+			string url = _authenticator.GetUrl(absoluteUrl, oauthParameters);
 			
 			HttpResponseMessage response = await _httpClient.GetAsync( url ).ConfigureAwait( false );
 			var result = response.Content.ReadAsStringAsync().Result;
@@ -93,10 +97,14 @@ namespace EtsyAccess.Services.Authentication
 			OAuthCredentials credentials = null;
 
 			var requestParameters = new KeyValuePair<string, string>[]
-				{ new KeyValuePair<string, string>("scopes", string.Join(" ", scopes)), };
+			{
+				new KeyValuePair<string, string>("scopes", string.Join(" ", scopes)),
+				new KeyValuePair<string, string>("oauth_callback", "oob")
+			};
 
-			var oauthParameters = GetOAuthRequestParameters(BaseUrl + RequestTokenUrl, "GET", null, requestParameters);
-			string url = GetUrl(RequestTokenUrl, oauthParameters);
+			string absoluteUrl = BaseUrl + RequestTokenUrl;
+			var oauthParameters = _authenticator.GetOAuthRequestParameters(absoluteUrl, "GET", null, requestParameters);
+			string url = _authenticator.GetUrl(absoluteUrl, oauthParameters);
 
 			HttpResponseMessage response = await _httpClient.GetAsync( url ).ConfigureAwait( false );
 			var result = response.Content.ReadAsStringAsync().Result;
@@ -121,102 +129,6 @@ namespace EtsyAccess.Services.Authentication
 			}
 
 			return credentials;
-		}
-
-		/// <summary>
-		///	Returns OAuth 1.0 request parameters with signature
-		/// </summary>
-		/// <param name="url"></param>
-		/// <param name="method"></param>
-		/// <param name="tokenSecret"></param>
-		/// <param name="extraRequestParameters"></param>
-		/// <returns></returns>
-		private Dictionary<string, string> GetOAuthRequestParameters(string url, string method, string tokenSecret, KeyValuePair<string, string>[] extraRequestParameters)
-		{
-			var requestParameters = new Dictionary<string, string>
-			{
-				{ "oauth_callback", "oob" },
-				{ "oauth_consumer_key", _applicationKey },
-				{ "oauth_nonce", GetRandomSessionNonce() },
-				{ "oauth_signature_method", "HMAC-SHA1" },
-				{ "oauth_timestamp", Misc.Misc.GetUnixEpochTime().ToString() },
-				{ "oauth_version", "1.0" },
-			};
-
-			if (extraRequestParameters != null)
-			{
-				foreach(var keyValue in extraRequestParameters)
-					requestParameters.Add(keyValue.Key, keyValue.Value);
-			}
-
-			string signature = GetOAuthSignature( url, method, tokenSecret, requestParameters );
-			requestParameters.Add( "oauth_signature", signature );
-
-			return requestParameters;
-		}
-
-		/// <summary>
-		///	Returns signed request payload by using HMAC-SHA1
-		/// </summary>
-		/// <param name="url"></param>
-		/// <param name="urlMethod"></param>
-		/// <param name="tokenSecret"></param>
-		/// <param name="requestParameters"></param>
-		/// <returns></returns>
-		private string GetOAuthSignature( string url, string urlMethod, string tokenSecret, Dictionary< string, string > requestParameters )
-		{
-			string signature = null;
-
-			string urlEncoded = Misc.Misc.EscapeUriDataStringRfc3986(url);
-			string encodedParameters = Misc.Misc.EscapeUriDataStringRfc3986(string.Join("&",
-				requestParameters.OrderBy(kv => kv.Key).Select(item =>
-					($"{ Misc.Misc.EscapeUriDataStringRfc3986(item.Key)}={Misc.Misc.EscapeUriDataStringRfc3986(item.Value)}"))));
-			
-			string baseString = $"{urlMethod.ToUpper()}&{urlEncoded}&{encodedParameters}";
-
-			HMACSHA1 hmacsha1 = new HMACSHA1( Encoding.ASCII.GetBytes( _sharedSecret + "&" + (string.IsNullOrEmpty(tokenSecret) ? "" : tokenSecret) ) );
-			byte[] data = Encoding.ASCII.GetBytes( baseString );
-
-			using (var stream = new MemoryStream(data))
-			{
-				signature = Convert.ToBase64String(hmacsha1.ComputeHash(stream));
-			}
-
-			return signature;
-		}
-
-		/// <summary>
-		///	Generates random nonce for each request
-		/// </summary>
-		/// <returns></returns>
-		private string GetRandomSessionNonce()
-		{
-			return Guid.NewGuid().ToString().Replace("-", "").Substring(0, 11).ToUpper();
-		}
-
-		/// <summary>
-		///	Returns url with query parameters
-		/// </summary>
-		/// <param name="baseUrl"></param>
-		/// <param name="requestParameters"></param>
-		/// <returns></returns>
-		private string GetUrl(string baseUrl, Dictionary<string, string> requestParameters)
-		{
-			string url = baseUrl;
-
-			var paramsBuilder = new StringBuilder();
-
-			foreach (var kv in requestParameters)
-			{
-				if (paramsBuilder.Length > 0)
-					paramsBuilder.Append("&");
-
-				paramsBuilder.Append($"{kv.Key}={kv.Value}");
-			}
-
-			url += "?" + paramsBuilder.ToString();
-
-			return url;
 		}
 
 		/// <summary>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using EtsyAccess.Models;
 
 namespace EtsyAccess.Services.Orders
 {
@@ -14,7 +15,7 @@ namespace EtsyAccess.Services.Orders
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
 		/// <returns></returns>
-		IEnumerable< T > GetOrders< T >( DateTime startDate, DateTime endDate );
+		Receipt[] GetOrders( DateTime startDate, DateTime endDate );
 		/// <summary>
 		///	Returns orders asynchronously that have changes at specified period
 		/// </summary>
@@ -22,6 +23,6 @@ namespace EtsyAccess.Services.Orders
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
 		/// <returns></returns>
-		Task< IEnumerable< T > > GetOrdersAsync< T >(DateTime startDate, DateTime endDate);
+		Task<Receipt[]> GetOrdersAsync(DateTime startDate, DateTime endDate);
 	}
 }

@@ -1,23 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EtsyAccess.Models;
 
 namespace EtsyAccess.Services.Orders
 {
 	public class OrdersService : BaseService, IOrdersService
 	{
-		public OrdersService( string accessToken ) : base( accessToken )
+		private readonly string ReceiptsUrl = "/v2/shops/{0}/receipts";
+
+		public OrdersService( string consumerKey, string consumerSecret, string token, string tokenSecret ) : base( consumerKey, consumerSecret, token, tokenSecret )
 		{ }
 
-		public IEnumerable< T > GetOrders< T >( DateTime startDate, DateTime endDate )
+		public async Task<Receipt[]> GetOrdersAsync(DateTime startDate, DateTime endDate)
 		{
-			throw new NotImplementedException();
+			string url = String.Format(ReceiptsUrl, "19641381");
+
+			var response = await base.GetAsync<Receipt>(url).ConfigureAwait(false);
+
+			return response.Results;
 		}
 
-		public Task< IEnumerable< T > > GetOrdersAsync< T >( DateTime startDate, DateTime endDate )
+		Receipt[] IOrdersService.GetOrders(DateTime startDate, DateTime endDate)
 		{
-			throw new NotImplementedException();
+			return GetOrdersAsync(startDate, endDate).GetAwaiter().GetResult();
 		}
 	}
 }

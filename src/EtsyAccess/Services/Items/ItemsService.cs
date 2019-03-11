@@ -7,7 +7,7 @@ namespace EtsyAccess.Services.Items
 {
 	public class ItemsService : BaseService, IItemsService
 	{
-		public ItemsService( string accessToken ) : base( accessToken )
+		public ItemsService( string consumerKey, string consumerSecret, string token, string tokenSecret ) : base( consumerKey, consumerSecret, token, tokenSecret )
 		{ }
 
 		public void UpdateSkuQuantity(string sku, int quantity)

@@ -14,7 +14,7 @@ namespace EtsyAccessTests
 		public void GetPermanentCredentials()
 		{
 			var credentials = this.AuthenticationService
-				.GetPermanentCredentials( "4e584a33de044fef2ace181bbaa27f", "221cdd56ff", "3df7de6a").GetAwaiter().GetResult();
+				.GetPermanentCredentials( "73af3b94e2be5683551b4ef82f665c", "504a4a7f2d", "6ee6ea1f").GetAwaiter().GetResult();
 
 			credentials.Should().NotBeNull();
 		}

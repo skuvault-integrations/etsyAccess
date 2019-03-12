@@ -9,11 +9,14 @@ namespace EtsyAccess
 	{
 		private readonly string _applicationKey;
 		private readonly string _sharedSecret;
+		private readonly string _shopName;
 
-		public EtsyServicesFactory(string applicationKey, string sharedSecret)
+		public EtsyServicesFactory(string applicationKey, string sharedSecret, string shopName )
 		{
 			_applicationKey = applicationKey;
 			_sharedSecret = sharedSecret;
+
+			_shopName = shopName;
 		}
 
 		public IItemsService CreateItemsService()
@@ -28,7 +31,7 @@ namespace EtsyAccess
 
 		public IOrdersService CreateOrdersService( string token, string tokenSecret )
 		{
-			return new OrdersService( _applicationKey, _sharedSecret, token, tokenSecret);
+			return new OrdersService( _applicationKey, _sharedSecret, token, tokenSecret, _shopName );
 		}
 	}
 }

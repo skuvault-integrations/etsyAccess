@@ -23,6 +23,13 @@ namespace EtsyAccess.Services.Orders
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
 		/// <returns></returns>
-		Task<Receipt[]> GetOrdersAsync(DateTime startDate, DateTime endDate);
+		Task< Receipt[] > GetOrdersAsync( DateTime startDate, DateTime endDate );
+
+		/// <summary>
+		///	Returns shop info by name
+		/// </summary>
+		/// <param name="shopName"></param>
+		/// <returns></returns>
+		Task< Shop > GetShopInfo();
 	}
 }

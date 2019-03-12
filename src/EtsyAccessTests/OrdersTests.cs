@@ -20,5 +20,13 @@ namespace EtsyAccessTests
 
 			orders.Should().NotBeNullOrEmpty();
 		}
+
+		[ Test ]
+		public void GetShopInfoByName()
+		{
+			var shop = this.OrdersService.GetShopInfo().GetAwaiter().GetResult();
+
+			shop.Should().NotBeNull();
+		}
 	}
 }

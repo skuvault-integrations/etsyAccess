@@ -9,6 +9,8 @@ namespace EtsyAccessTests
 {
 	public class BaseTest
 	{
+		private const string ShopName = "SkuVaultInc";
+
 		private const string ApplicationKey = "hmmvy1sp7fqfz43d4z6c117l";
 		private const string SharedSecret = "airddqdp3t";
 
@@ -22,7 +24,7 @@ namespace EtsyAccessTests
 		[ SetUp ]
 		public void Init()
 		{
-			var factory = new EtsyServicesFactory( ApplicationKey, SharedSecret );
+			var factory = new EtsyServicesFactory( ApplicationKey, SharedSecret, ShopName );
 
 			OrdersService = factory.CreateOrdersService( Token, TokenSecret );
 			AuthenticationService = factory.CreateAuthenticationService();

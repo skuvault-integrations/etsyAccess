@@ -6,14 +6,14 @@ namespace EtsyAccess.Misc
 {
 	public static class Misc
 	{
-		public static long GetUnixEpochTime()
-		{
-			return (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
-		}
-
 		public static DateTime FromEpochTime(this long epochTime)
 		{
 			return new DateTime(1970, 1, 1).AddSeconds(epochTime);
+		}
+
+		public static int FromUtcTimeToEpoch(this DateTime date)
+		{
+			return ( int )( date - new DateTime( 1970, 1, 1 ) ).TotalSeconds;
 		}
 	}
 }

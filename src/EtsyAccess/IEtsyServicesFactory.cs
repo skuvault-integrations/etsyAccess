@@ -11,6 +11,6 @@ namespace EtsyAccess
 	{
 		IAuthenticationService CreateAuthenticationService();
 		IOrdersService CreateOrdersService( string token, string tokenSecret );
-		IItemsService CreateItemsService();
+		IItemsService CreateItemsService( string token, string tokenSecret );
 	}
 }

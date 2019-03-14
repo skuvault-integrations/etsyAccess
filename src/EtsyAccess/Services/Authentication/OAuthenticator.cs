@@ -26,9 +26,16 @@ namespace EtsyAccess.Services.Authentication
 			_consumerSecret = consumerSecret;
 		}
 
-		public string GetUriWithOAuthQueryParameters( string url )
+		/// <summary>
+		///	
+		/// </summary>
+		/// <param name="url"></param>
+		/// <param name="methodName"></param>
+		/// <param name="extraRequestParameters"></param>
+		/// <returns></returns>
+		public string GetUriWithOAuthQueryParameters( string url, string methodName = "GET",  Dictionary<string, string> extraRequestParameters = null )
 		{
-			var oauthRequestParams = GetOAuthRequestParameters(url, "GET", _tokenSecret, null);
+			var oauthRequestParams = GetOAuthRequestParameters( url, methodName, _tokenSecret, extraRequestParameters );
 
 			return GetUrl(url, oauthRequestParams);
 		}
@@ -41,7 +48,7 @@ namespace EtsyAccess.Services.Authentication
 		/// <param name="tokenSecret"></param>
 		/// <param name="extraRequestParameters"></param>
 		/// <returns></returns>
-		public Dictionary<string, string> GetOAuthRequestParameters(string url, string method, string tokenSecret, KeyValuePair<string, string>[] extraRequestParameters)
+		public Dictionary<string, string> GetOAuthRequestParameters( string url, string method, string tokenSecret, Dictionary<string, string> extraRequestParameters )
 		{
 			// standard OAuth 1.0 request parameters
 			var requestParameters = new Dictionary<string, string>
@@ -70,11 +77,24 @@ namespace EtsyAccess.Services.Authentication
 			// extra parameters can be placed also directly in the url
 			var queryParams = HttpUtility.ParseQueryString(uri.Query);
 
-			foreach (var key in queryParams.AllKeys)
-				requestParameters.Add(key, queryParams[key]);
+			foreach ( var key in queryParams.AllKeys )
+			{
+				if ( !requestParameters.ContainsKey( key ) )
+					requestParameters.Add( key, queryParams[key] );
+			}
+
+			requestParameters.Remove( "oauth_signature" );
 
 			string signature = GetOAuthSignature( baseUrl, method, tokenSecret, requestParameters );
 			requestParameters.Add( "oauth_signature", signature );
+
+			// if http method isn't GET all request parameters should be included in the request body
+			if (extraRequestParameters != null
+			    && !method.ToUpper().Equals("GET"))
+			{
+				foreach ( var keyValue in extraRequestParameters )
+					requestParameters.Remove( keyValue.Key );
+			}
 
 			return requestParameters;
 		}

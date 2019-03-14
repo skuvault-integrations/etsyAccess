@@ -19,9 +19,9 @@ namespace EtsyAccess
 			_shopName = shopName;
 		}
 
-		public IItemsService CreateItemsService()
+		public IItemsService CreateItemsService( string token, string tokenSecret )
 		{
-			throw new NotImplementedException();
+			return new ItemsService( _shopName, _applicationKey, _sharedSecret, token, tokenSecret );
 		}
 
 		public IAuthenticationService CreateAuthenticationService()
@@ -31,7 +31,7 @@ namespace EtsyAccess
 
 		public IOrdersService CreateOrdersService( string token, string tokenSecret )
 		{
-			return new OrdersService( _applicationKey, _sharedSecret, token, tokenSecret, _shopName );
+			return new OrdersService( _shopName, _applicationKey, _sharedSecret, token, tokenSecret );
 		}
 	}
 }

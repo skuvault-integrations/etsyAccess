@@ -63,10 +63,10 @@ namespace EtsyAccess.Services.Authentication
 		{
 			OAuthCredentials credentials = null;
 
-			var requestParameters = new KeyValuePair<string, string>[]
+			var requestParameters = new Dictionary<string, string>
 			{
-				new KeyValuePair<string, string>("oauth_token", temporaryToken),
-				new KeyValuePair<string, string>("oauth_verifier", verifierCode),
+				{ "oauth_token", temporaryToken },
+				{ "oauth_verifier", verifierCode }
 			};
 
 			string absoluteUrl = BaseUrl + AccessTokenUrl;
@@ -96,10 +96,10 @@ namespace EtsyAccess.Services.Authentication
 		{
 			OAuthCredentials credentials = null;
 
-			var requestParameters = new KeyValuePair<string, string>[]
+			var requestParameters = new Dictionary<string, string>
 			{
-				new KeyValuePair<string, string>("scopes", string.Join(" ", scopes)),
-				new KeyValuePair<string, string>("oauth_callback", "oob")
+				{ "scopes", string.Join(" ", scopes) },
+				{ "oauth_callback", "oob" }
 			};
 
 			string absoluteUrl = BaseUrl + RequestTokenUrl;

@@ -33,6 +33,7 @@ namespace EtsyAccess.Models
 		/// <summary>
 		/// List of active offerings for this product
 		/// </summary>
+		[JsonProperty("offerings")]
 		public ListingOffering[] Offerings { get; set; }
 	}
 }

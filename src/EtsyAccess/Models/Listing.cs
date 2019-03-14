@@ -148,12 +148,12 @@ namespace EtsyAccess.Models
 		/// The minimum number of days for processing for this listing
 		/// </summary>
 		[JsonProperty("processing_min")]
-		public int ProcessingMin { get; set; }
+		public int? ProcessingMin { get; set; }
 		/// <summary>
 		/// The maximum number of days for processing for this listing
 		/// </summary>
 		[JsonProperty("processing_max")]
-		public int ProcessingMax { get; set; }
+		public int? ProcessingMax { get; set; }
 		/// <summary>
 		/// Who made the item being listed
 		/// </summary>

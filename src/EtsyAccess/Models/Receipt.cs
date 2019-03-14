@@ -186,6 +186,8 @@ namespace EtsyAccess.Models
 		/// </summary>
 		[JsonProperty("adjusted_grandtotal")]
 		public float AdjustedGrandTotal { get; set; }
+		[JsonProperty("shipping_details")]
+		public ShippingDetails ShippingDetails { get; set; }
 		/// <summary>
 		/// Shipment information associated to this receipt
 		/// </summary>
@@ -195,6 +197,8 @@ namespace EtsyAccess.Models
 		public Transaction[] Transactions { get; set; }
 		[JsonProperty("Listings")]
 		public Listing[] Listings { get; set; }
+		[JsonProperty("Country")]
+		public Country Country { get; set; }
 		/// <summary>
 		///	Receipt creation time UTC
 		/// </summary>
@@ -234,5 +238,23 @@ namespace EtsyAccess.Models
 		/// Date the notification was sent
 		/// </summary>
 		public long NotificationDate { get; set; }
+	}
+
+	public class ShippingDetails
+	{
+		[JsonProperty("can_mark_as_shipped")]
+		public bool CanMarkAsShipped { get; set; }
+		[JsonProperty("was_shipped")]
+		public bool WasShipped { get; set; }
+		[JsonProperty("is_future_shipment")]
+		public bool IsFutureShipment { get; set; }
+		[JsonProperty("has_free_shipping_discount")]
+		public bool HasFreeShipmentDiscount { get; set; }
+		[JsonProperty("not_shipped_state_display")]
+		public string NotShippedStateDisplay { get; set; }
+		[JsonProperty("shipping_method")]
+		public string ShippingMethod { get; set; }
+		[JsonProperty("is_estimated_delivery_date_relevant")]
+		public bool IsEstimatedDeliveryDateRelevant { get; set; }
 	}
 }

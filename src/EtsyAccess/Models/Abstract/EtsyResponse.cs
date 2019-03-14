@@ -26,4 +26,10 @@ namespace EtsyAccess.Models
 		public T[] Results { get; set; }
 		public EtsyPagination Pagination { get; set; }
 	}
+
+	public class EtsyResponseSingleEntity<T>
+	{
+		[JsonProperty("results")]
+		public T Result { get; set; }
+	}
 }

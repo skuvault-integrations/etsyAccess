@@ -27,6 +27,7 @@ namespace EtsyAccessTests
 			var factory = new EtsyServicesFactory( ApplicationKey, SharedSecret, ShopName );
 
 			OrdersService = factory.CreateOrdersService( Token, TokenSecret );
+			ItemsService = factory.CreateItemsService( Token, TokenSecret );
 			AuthenticationService = factory.CreateAuthenticationService();
 		}
 	}

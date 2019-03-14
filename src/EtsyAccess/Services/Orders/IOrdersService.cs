@@ -11,25 +11,22 @@ namespace EtsyAccess.Services.Orders
 		/// <summary>
 		///	Returns orders that have changes at specified period
 		/// </summary>
-		/// <typeparam name="T"></typeparam>
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
 		/// <returns></returns>
-		Receipt[] GetOrders( DateTime startDate, DateTime endDate );
+		IEnumerable< Receipt > GetOrders( DateTime startDate, DateTime endDate );
 		/// <summary>
 		///	Returns orders asynchronously that have changes at specified period
 		/// </summary>
-		/// <typeparam name="T"></typeparam>
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
 		/// <returns></returns>
-		Task< Receipt[] > GetOrdersAsync( DateTime startDate, DateTime endDate );
+		Task< IEnumerable< Receipt > > GetOrdersAsync( DateTime startDate, DateTime endDate );
 
 		/// <summary>
 		///	Returns shop info by name
 		/// </summary>
-		/// <param name="shopName"></param>
-		/// <returns></returns>
+		/// <returns>Current shop information</returns>
 		Task< Shop > GetShopInfo();
 	}
 }

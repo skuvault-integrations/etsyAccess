@@ -16,12 +16,12 @@ namespace EtsyAccess.Services
 {
 	public class BaseService
 	{
-		private const string BaseApiUrl = "https://openapi.etsy.com";
+		protected const string BaseUrl = "https://openapi.etsy.com";
 		private readonly string ShopsInfoUrl = "/v2/shops/{0}";
 		private readonly string _shopName;
 
-		private readonly HttpClient _httpClient;
-		private readonly OAuthenticator _authenticator;
+		protected readonly HttpClient httpClient;
+		protected readonly OAuthenticator authenticator;
 		private Func< string > _additionalLogInfo;
 
 		/// <summary>
@@ -37,33 +37,34 @@ namespace EtsyAccess.Services
 		{
 			_shopName = shopName;
 
-			_httpClient = new HttpClient()
+			httpClient = new HttpClient()
 			{
-				BaseAddress = new Uri( BaseApiUrl )
+				BaseAddress = new Uri( BaseUrl )
 			};
 
-			_authenticator = new OAuthenticator( consumerKey, consumerSecret, token, tokenSecret);
+			authenticator = new OAuthenticator( consumerKey, consumerSecret, token, tokenSecret);
 		}
 
 		/// <summary>
 		///	Returns current shop info
 		/// </summary>
-		public async Task<Shop> GetShopInfo()
+		public async Task< Shop > GetShopInfo()
 		{
+			var mark = Mark.CreateNew();
 			IEnumerable< Shop > response = null;
-			string url = String.Format(ShopsInfoUrl, _shopName);
+			string url = String.Format( ShopsInfoUrl, _shopName );
 
 			try
 			{
-				EtsyLogger.LogStarted( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : url ) );
+				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
 				response = await GetEntitiesAsync< Shop >( url ).ConfigureAwait( false );
 
-				EtsyLogger.LogEnd( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : url ) );
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: response.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 			}
 			catch ( Exception exception )
 			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : "" ), exception );
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
 				EtsyLogger.LogTraceException( etsyException );
 				throw etsyException;
 			}
@@ -74,17 +75,21 @@ namespace EtsyAccess.Services
 		/// <summary>
 		///	Returns entities asynchronously
 		/// </summary>
-		/// <typeparam name="T"></typeparam>
+		/// <typeparam name="T">Entities that should be received from service endpoint</typeparam>
+		/// <param name="url">Relative url to endpoint</param>
 		/// <param name="result"></param>
-		/// <param name="url"></param>
+		/// <param name="mark">Method tracing mark</param>
 		/// <returns></returns>
-		public async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, List< T > result = null )
+		public async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, List< T > result = null, Mark mark = null )
 		{
-			url = _authenticator.GetUriWithOAuthQueryParameters(BaseApiUrl + url);
+			if( mark.IsBlank() )
+				mark = Mark.CreateNew();
+
+			url = authenticator.GetUriWithOAuthQueryParameters( BaseUrl + url );
 
 			try
 			{
-				var httpResponse = await _httpClient.GetAsync(url).ConfigureAwait( false );
+				var httpResponse = await httpClient.GetAsync(url).ConfigureAwait( false );
 				string content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
 				// handle Etsy error
@@ -95,7 +100,7 @@ namespace EtsyAccess.Services
 				if (result == null)
 					result = new List<T>();
 
-				result.AddRange(response.Results);
+				result.AddRange( response.Results );
 
 				// handle pagination
 				if ( response.Pagination.NextPage != null 
@@ -103,21 +108,21 @@ namespace EtsyAccess.Services
 				{
 					int offset = response.Pagination.NextOffset.Value;
 
-					url = url.Replace(BaseApiUrl, "");
+					url = url.Replace( BaseUrl, "" );
 
-					if (url.Contains('?'))
+					if ( url.Contains('?') )
 						url += "&";
 					else
 						url += "?";
 
-					url += url.Contains("offset") ? url.Replace($"offset={offset - 1}", $"offset={offset}") : $"offset={offset}";
+					url += url.Contains( "offset" ) ? url.Replace( $"offset={offset - 1}", $"offset={offset}" ) : $"offset={offset}";
 
 					await GetEntitiesAsync( url, result ).ConfigureAwait(false);
 				}
 			}
 			catch ( Exception exception )
 			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : "" ), exception );
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
 				EtsyLogger.LogTraceException( etsyException );
 				throw etsyException;
 			}
@@ -130,14 +135,18 @@ namespace EtsyAccess.Services
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <param name="url"></param>
+		///  <param name="mark"></param>
 		/// <returns></returns>
-		public async Task< T > GetEntityAsync< T >( string url )
+		public async Task< T > GetEntityAsync< T >( string url, Mark mark = null )
 		{
-			url = _authenticator.GetUriWithOAuthQueryParameters( BaseApiUrl + url );
+			if( mark.IsBlank() )
+				mark = Mark.CreateNew();
+
+			url = authenticator.GetUriWithOAuthQueryParameters( BaseUrl + url );
 
 			try
 			{
-				var httpResponse = await _httpClient.GetAsync( url ).ConfigureAwait( false );
+				var httpResponse = await httpClient.GetAsync( url ).ConfigureAwait( false );
 				string content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
 				// handle Etsy error
@@ -149,7 +158,7 @@ namespace EtsyAccess.Services
 			}
 			catch ( Exception exception )
 			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : "" ), exception );
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
 				EtsyLogger.LogTraceException( etsyException );
 				throw etsyException;
 			}
@@ -160,15 +169,19 @@ namespace EtsyAccess.Services
 		/// </summary>
 		/// <param name="payload"></param>
 		/// <param name="url"></param>
+		/// <param name="mark"></param>
 		/// <returns></returns>
-		public async Task PutAsync( string url, Dictionary<string, string> payload )
+		public async Task PutAsync( string url, Dictionary<string, string> payload, Mark mark = null )
 		{
+			if( mark.IsBlank() )
+				mark = Mark.CreateNew();
+
 			var content = new FormUrlEncodedContent( payload );
-			url = _authenticator.GetUriWithOAuthQueryParameters( BaseApiUrl + url, "PUT", payload );
+			url = authenticator.GetUriWithOAuthQueryParameters( BaseUrl + url, "PUT", payload );
 
 			try
 			{
-				var response = await _httpClient.PutAsync( url, content ).ConfigureAwait( false );
+				var response = await httpClient.PutAsync( url, content ).ConfigureAwait( false );
 				string responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 				// handle server response maybe some error happened
@@ -179,7 +192,7 @@ namespace EtsyAccess.Services
 			}
 			catch (Exception exception)
 			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : "" ), exception );
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
 				EtsyLogger.LogTraceException( etsyException );
 				throw etsyException;
 			}
@@ -189,7 +202,7 @@ namespace EtsyAccess.Services
 		///	Handles Etsy server error responses
 		/// </summary>
 		/// <param name="response"></param>
-		private void HandleEtsyEndpointErrorResponse( string response )
+		protected void HandleEtsyEndpointErrorResponse( string response )
 		{
 			if ( string.IsNullOrEmpty(response) )
 				return;
@@ -198,13 +211,35 @@ namespace EtsyAccess.Services
 				throw new EtsyInvalidSignatureException( response );
 		}
 
-		protected string CreateMethodCallInfo( string methodParameters = "", string mark = "", string errors = "", string methodResult = "", string additionalInfo = "", [ CallerMemberName ] string memberName = "" )
+		/// <summary>
+		///	Creates method calling detailed information
+		/// </summary>
+		/// <param name="url">Absolute path to service endpoint</param>
+		/// <param name="mark">Unique stamp to track concrete method</param>
+		/// <param name="errors">Errors</param>
+		/// <param name="methodResult">Service endpoint raw result</param>
+		/// <param name="additionalInfo">Extra logging information</param>
+		/// <param name="memberName">Method name</param>
+		/// <returns></returns>
+		protected string CreateMethodCallInfo( string url = "", Mark mark = null, string errors = "", string methodResult = "", string additionalInfo = "", [ CallerMemberName ] string memberName = "" )
 		{
+			string serviceEndPoint = null;
+			string requestParameters = null;
+
+			if ( !string.IsNullOrEmpty( url ) )
+			{
+				Uri uri = new Uri( url.Contains( BaseUrl ) ? url : BaseUrl + url );
+
+				serviceEndPoint = uri.LocalPath;
+				requestParameters = uri.Query;
+			}
+
 			var str = string.Format(
-				"{{MethodName:{0}, Mark:'{3}', MethodParameters:{2}{4}{5}",
+				"{{MethodName: {0}, Mark: '{1}', ServiceEndPoint: {2}, {3} {4}{5}}}",
 				memberName,
-				methodParameters,
-				mark,
+				mark ?? Mark.Blank(),
+				string.IsNullOrWhiteSpace(serviceEndPoint) ? string.Empty : serviceEndPoint,
+				string.IsNullOrWhiteSpace(requestParameters) ? string.Empty : ", RequestParameters: " + requestParameters,
 				string.IsNullOrWhiteSpace( errors ) ? string.Empty : ", Errors:" + errors,
 				string.IsNullOrWhiteSpace( methodResult ) ? string.Empty : ", Result:" + methodResult,
 				string.IsNullOrWhiteSpace( additionalInfo ) ? string.Empty : ", " + additionalInfo

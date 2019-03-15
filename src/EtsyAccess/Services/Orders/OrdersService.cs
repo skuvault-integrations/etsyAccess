@@ -23,9 +23,11 @@ namespace EtsyAccess.Services.Orders
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
 		/// <returns></returns>
-		public async Task< IEnumerable< Receipt > > GetOrdersAsync(DateTime startDate, DateTime endDate)
+		public async Task< IEnumerable< Receipt > > GetOrdersAsync( DateTime startDate, DateTime endDate )
 		{
+			var mark = Mark.CreateNew();
 			IEnumerable< Receipt > response = null;
+
 			var shop = await GetShopInfo().ConfigureAwait( false );
 
 			long minLastModified = startDate.FromUtcTimeToEpoch();
@@ -36,15 +38,15 @@ namespace EtsyAccess.Services.Orders
 
 			try
 			{
-				EtsyLogger.LogStarted( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : url ) );
+				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-				response = await base.GetEntitiesAsync< Receipt >( url ).ConfigureAwait(false);
+				response = await base.GetEntitiesAsync< Receipt >( url, mark: mark ).ConfigureAwait( false );
 
-				EtsyLogger.LogEnd( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : url ) );
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: response.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 			}
 			catch ( Exception exception )
 			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : "" ), exception );
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
 				EtsyLogger.LogTraceException( etsyException );
 				throw etsyException;
 			}

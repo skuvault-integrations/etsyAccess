@@ -34,6 +34,7 @@ namespace EtsyAccess.Services.Items
 		/// <returns></returns>
 		public async Task UpdateSkuQuantityAsync( string sku, int quantity )
 		{
+			var mark = Mark.CreateNew();
 			var shop = await GetShopInfo().ConfigureAwait( false );
 
 			// get all listings that have products with specified sku
@@ -72,20 +73,20 @@ namespace EtsyAccess.Services.Items
 
 			try
 			{
-				EtsyLogger.LogStarted( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : url ) );
+				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
 				var payload = new Dictionary<string, string>
 				{
 					{ "products", JsonConvert.SerializeObject( updateProductQuantityRequest ) }
 				};
 
-				await base.PutAsync( url, payload ).ConfigureAwait( false );
+				await base.PutAsync( url, payload, mark ).ConfigureAwait( false );
 
-				EtsyLogger.LogEnd( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : url ) );
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 			}
 			catch ( Exception exception )
 			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( mark : "", additionalInfo : this.AdditionalLogInfo(), methodParameters : "" ), exception );
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
 				EtsyLogger.LogTraceException( etsyException );
 				throw etsyException;
 			}
@@ -126,13 +127,27 @@ namespace EtsyAccess.Services.Items
 		/// <returns></returns>
 		public async Task < IEnumerable< Listing > > GetListingsBySku( Shop shop, string sku )
 		{
+			var mark = Mark.CreateNew();
 			string url = String.Format( GetShopActiveListingsUrl, shop.Id );
 
-			var listings = await GetEntitiesAsync< Listing >( url ).ConfigureAwait( false );
+			try
+			{
+				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-			return listings
-				.Where( listing => listing.Sku.Select( item => item.ToLower() ).Contains( sku.ToLower() ) )
-				.ToArray();
+				var listings = await GetEntitiesAsync< Listing >( url, mark: mark ).ConfigureAwait( false );
+
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: listings.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
+
+				return listings
+					.Where( listing => listing.Sku.Select( item => item.ToLower() ).Contains( sku.ToLower() ) )
+					.ToArray();
+			}
+			catch (Exception exception)
+			{
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+				EtsyLogger.LogTraceException( etsyException );
+				throw etsyException;
+			}
 		}
 
 		/// <summary>
@@ -143,12 +158,22 @@ namespace EtsyAccess.Services.Items
 		/// <returns></returns>
 		public async Task< ListingProduct > GetListingProductBySku( Listing listing, string sku )
 		{
+			var mark = Mark.CreateNew();
 			string url = String.Format( GetListingProductsInventoryUrl, listing.Id );
 
-			var inventory = await GetEntityAsync< ListingInventory >( url ).ConfigureAwait( false );
+			try
+			{
+				var inventory = await GetEntityAsync< ListingInventory >( url, mark ).ConfigureAwait( false );
 
-			return inventory.Products
-				.FirstOrDefault( product => product.Sku != null && product.Sku.ToLower().Equals( sku.ToLower() ) );
+				return inventory.Products
+					.FirstOrDefault( product => product.Sku != null && product.Sku.ToLower().Equals( sku.ToLower() ) );
+			}
+			catch ( Exception exception )
+			{
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+				EtsyLogger.LogTraceException( etsyException );
+				throw etsyException;
+			}
 		}
 	}
 }

@@ -10,6 +10,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using EtsyAccess.Exceptions;
+using EtsyAccess.Misc;
 using NLog;
 using NLog.Fluent;
 using NLog.LayoutRenderers.Wrappers;
@@ -30,29 +32,14 @@ namespace EtsyAccess.Services.Authentication
 		}
 	}
 
-	public class AuthenticationService : IAuthenticationService
+	public class AuthenticationService : BaseService, IAuthenticationService
 	{
-		private const string BaseUrl = "https://openapi.etsy.com/";
-		private const string RequestTokenUrl = "v2/oauth/request_token";
-		private const string AccessTokenUrl = "v2/oauth/access_token";
+		private const string RequestTokenUrl = "/v2/oauth/request_token";
+		private const string AccessTokenUrl = "/v2/oauth/access_token";
 
-		private readonly string _applicationKey;
-		private readonly string _sharedSecret;
-
-		private readonly HttpClient _httpClient;
-		private readonly OAuthenticator _authenticator;
-
-		public AuthenticationService(string applicationKey, string sharedSecret)
+		public AuthenticationService(string applicationKey, string sharedSecret) : base(null, applicationKey,
+			sharedSecret, null, null)
 		{
-			_applicationKey = applicationKey;
-			_sharedSecret = sharedSecret;
-
-			_httpClient = new HttpClient
-			{
-				BaseAddress = new Uri(BaseUrl)
-			};
-
-			_authenticator = new OAuthenticator( applicationKey, sharedSecret );
 		}
 
 		/// <summary>
@@ -61,6 +48,7 @@ namespace EtsyAccess.Services.Authentication
 		/// <returns></returns>
 		public async Task< OAuthCredentials > GetPermanentCredentials( string temporaryToken, string temporaryTokenSecret, string verifierCode )
 		{
+			var mark = Mark.CreateNew();
 			OAuthCredentials credentials = null;
 
 			var requestParameters = new Dictionary<string, string>
@@ -69,22 +57,39 @@ namespace EtsyAccess.Services.Authentication
 				{ "oauth_verifier", verifierCode }
 			};
 
-			string absoluteUrl = BaseUrl + AccessTokenUrl;
-			var oauthParameters = _authenticator.GetOAuthRequestParameters(absoluteUrl, "GET", temporaryTokenSecret, requestParameters);
-			string url = _authenticator.GetUrl(absoluteUrl, oauthParameters);
-			
-			HttpResponseMessage response = await _httpClient.GetAsync( url ).ConfigureAwait( false );
-			var result = response.Content.ReadAsStringAsync().Result;
+			string url = BaseUrl + AccessTokenUrl;
 
-			var queryParams = ParseQueryParams(result);
-			queryParams.TryGetValue("oauth_token", out var token);
-			queryParams.TryGetValue("oauth_token_secret", out var tokenSecret);
+			try
+			{
+				var oauthParameters = authenticator.GetOAuthRequestParameters( url, "GET", temporaryTokenSecret, requestParameters );
+				url = authenticator.GetUrl( url, oauthParameters );
 
-			if (!(string.IsNullOrEmpty(token)
-				|| string.IsNullOrEmpty(tokenSecret)))
-				credentials = new OAuthCredentials(null, token, tokenSecret);
+				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-			return credentials;
+				HttpResponseMessage response = await httpClient.GetAsync( url ).ConfigureAwait( false );
+				var result = response.Content.ReadAsStringAsync().Result;
+
+				HandleEtsyEndpointErrorResponse( result );
+
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
+
+				var queryParams = ParseQueryParams( result );
+				queryParams.TryGetValue( "oauth_token", out var token );
+				queryParams.TryGetValue( "oauth_token_secret", out var tokenSecret );
+
+				if (!( string.IsNullOrEmpty( token )
+				      || string.IsNullOrEmpty( tokenSecret ) ))
+					credentials = new OAuthCredentials( null, token, tokenSecret );
+
+				return credentials;
+			}
+			catch ( Exception exception )
+			{
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+				EtsyLogger.LogTraceException( etsyException );
+				throw etsyException;
+			}
+
 		}
 
 		/// <summary>
@@ -92,8 +97,9 @@ namespace EtsyAccess.Services.Authentication
 		/// </summary>
 		/// <param name="scopes">Permissions</param>
 		/// <returns></returns>
-		public async Task<OAuthCredentials> GetTemporaryCredentials(string[] scopes)
+		public async Task<OAuthCredentials> GetTemporaryCredentials( string[] scopes )
 		{
+			var mark = Mark.CreateNew();
 			OAuthCredentials credentials = null;
 
 			var requestParameters = new Dictionary<string, string>
@@ -103,32 +109,46 @@ namespace EtsyAccess.Services.Authentication
 			};
 
 			string absoluteUrl = BaseUrl + RequestTokenUrl;
-			var oauthParameters = _authenticator.GetOAuthRequestParameters(absoluteUrl, "GET", null, requestParameters);
-			string url = _authenticator.GetUrl(absoluteUrl, oauthParameters);
+			var oauthParameters = authenticator.GetOAuthRequestParameters( absoluteUrl, "GET", null, requestParameters );
+			string url = authenticator.GetUrl( absoluteUrl, oauthParameters );
 
-			HttpResponseMessage response = await _httpClient.GetAsync( url ).ConfigureAwait( false );
-			var result = response.Content.ReadAsStringAsync().Result;
-
-			if (!string.IsNullOrEmpty(result)
-				&& result.IndexOf("login_url", StringComparison.InvariantCulture) > -1)
+			try
 			{
-				string loginUrl = Uri.UnescapeDataString(result.Replace("login_url=", ""));
+				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-				string[] temp = loginUrl.Split('?');
+				HttpResponseMessage response = await httpClient.GetAsync( url ).ConfigureAwait( false );
+				var result = response.Content.ReadAsStringAsync().Result;
 
-				if (temp.Length == 2)
+				HandleEtsyEndpointErrorResponse( result );
+
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
+
+				if ( !string.IsNullOrEmpty( result )
+				     && result.IndexOf( "login_url", StringComparison.InvariantCulture ) > -1 )
 				{
-					var queryParams = ParseQueryParams(temp[1]);
-					queryParams.TryGetValue("oauth_token", out var token);
-					queryParams.TryGetValue("oauth_token_secret", out var tokenSecret);
+					string loginUrl = Uri.UnescapeDataString( result.Replace( "login_url=", "" ) );
 
-					if (token != null && tokenSecret != null)
-						credentials = new OAuthCredentials(loginUrl, token, tokenSecret);
+					string[] temp = loginUrl.Split( '?' );
+
+					if ( temp.Length == 2 )
+					{
+						var queryParams = ParseQueryParams( temp[1] );
+						queryParams.TryGetValue( "oauth_token", out var token );
+						queryParams.TryGetValue( "oauth_token_secret", out var tokenSecret );
+
+						if ( token != null && tokenSecret != null )
+							credentials = new OAuthCredentials( loginUrl, token, tokenSecret );
+					}
 				}
 
+				return credentials;
 			}
-
-			return credentials;
+			catch ( Exception exception )
+			{
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+				EtsyLogger.LogTraceException( etsyException );
+				throw etsyException;
+			}
 		}
 
 		/// <summary>

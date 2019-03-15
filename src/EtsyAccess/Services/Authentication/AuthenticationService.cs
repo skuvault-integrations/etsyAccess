@@ -15,6 +15,7 @@ using EtsyAccess.Misc;
 using NLog;
 using NLog.Fluent;
 using NLog.LayoutRenderers.Wrappers;
+using Polly;
 
 namespace EtsyAccess.Services.Authentication
 {
@@ -48,48 +49,56 @@ namespace EtsyAccess.Services.Authentication
 		/// <returns></returns>
 		public async Task< OAuthCredentials > GetPermanentCredentials( string temporaryToken, string temporaryTokenSecret, string verifierCode )
 		{
-			var mark = Mark.CreateNew();
-			OAuthCredentials credentials = null;
-
 			var requestParameters = new Dictionary<string, string>
 			{
 				{ "oauth_token", temporaryToken },
 				{ "oauth_verifier", verifierCode }
 			};
 
-			string url = BaseUrl + AccessTokenUrl;
+			return await Policy.HandleResult<OAuthCredentials>(credentials => credentials == null)
+				.WaitAndRetryAsync(RetryCount,
+					retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+					(entityRaw, timeSpan, retryCount, context) =>
+					{
+						EtsyLogger.LogTraceRetryStarted(
+							$"Request failed. Waiting {timeSpan} before next attempt. Retry attempt {retryCount}");
+					})
+				.ExecuteAsync(async () =>
+				{
+					var mark = Mark.CreateNew();
+					OAuthCredentials credentials = null;
+					string url = BaseUrl + AccessTokenUrl;
 
-			try
-			{
-				var oauthParameters = authenticator.GetOAuthRequestParameters( url, "GET", temporaryTokenSecret, requestParameters );
-				url = authenticator.GetUrl( url, oauthParameters );
+					try
+					{
+						var oauthParameters = authenticator.GetOAuthRequestParameters( url, "GET", temporaryTokenSecret, requestParameters );
+						url = authenticator.GetUrl( url, oauthParameters );
 
-				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
+						EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-				HttpResponseMessage response = await httpClient.GetAsync( url ).ConfigureAwait( false );
-				var result = response.Content.ReadAsStringAsync().Result;
+						HttpResponseMessage response = await httpClient.GetAsync( url ).ConfigureAwait( false );
+						var result = response.Content.ReadAsStringAsync().Result;
 
-				HandleEtsyEndpointErrorResponse( result );
+						HandleEtsyEndpointErrorResponse( result );
 
-				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
+						EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 
-				var queryParams = ParseQueryParams( result );
-				queryParams.TryGetValue( "oauth_token", out var token );
-				queryParams.TryGetValue( "oauth_token_secret", out var tokenSecret );
+						var queryParams = ParseQueryParams( result );
+						queryParams.TryGetValue( "oauth_token", out var token );
+						queryParams.TryGetValue( "oauth_token_secret", out var tokenSecret );
 
-				if (!( string.IsNullOrEmpty( token )
-				      || string.IsNullOrEmpty( tokenSecret ) ))
-					credentials = new OAuthCredentials( null, token, tokenSecret );
+						if (!( string.IsNullOrEmpty( token )
+						       || string.IsNullOrEmpty( tokenSecret ) ))
+							credentials = new OAuthCredentials( null, token, tokenSecret );
+					}
+					catch ( Exception exception )
+					{
+						var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+						EtsyLogger.LogTraceException( etsyException );
+					}
 
-				return credentials;
-			}
-			catch ( Exception exception )
-			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
-				EtsyLogger.LogTraceException( etsyException );
-				throw etsyException;
-			}
-
+					return credentials;
+				});
 		}
 
 		/// <summary>
@@ -99,56 +108,67 @@ namespace EtsyAccess.Services.Authentication
 		/// <returns></returns>
 		public async Task<OAuthCredentials> GetTemporaryCredentials( string[] scopes )
 		{
-			var mark = Mark.CreateNew();
-			OAuthCredentials credentials = null;
-
 			var requestParameters = new Dictionary<string, string>
 			{
 				{ "scopes", string.Join(" ", scopes) },
 				{ "oauth_callback", "oob" }
 			};
 
-			string absoluteUrl = BaseUrl + RequestTokenUrl;
-			var oauthParameters = authenticator.GetOAuthRequestParameters( absoluteUrl, "GET", null, requestParameters );
-			string url = authenticator.GetUrl( absoluteUrl, oauthParameters );
-
-			try
-			{
-				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
-
-				HttpResponseMessage response = await httpClient.GetAsync( url ).ConfigureAwait( false );
-				var result = response.Content.ReadAsStringAsync().Result;
-
-				HandleEtsyEndpointErrorResponse( result );
-
-				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
-
-				if ( !string.IsNullOrEmpty( result )
-				     && result.IndexOf( "login_url", StringComparison.InvariantCulture ) > -1 )
-				{
-					string loginUrl = Uri.UnescapeDataString( result.Replace( "login_url=", "" ) );
-
-					string[] temp = loginUrl.Split( '?' );
-
-					if ( temp.Length == 2 )
+			return await Policy.HandleResult<OAuthCredentials>( credentials => credentials == null )
+				.WaitAndRetryAsync( RetryCount,
+					retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+					(entityRaw, timeSpan, retryCount, context) =>
 					{
-						var queryParams = ParseQueryParams( temp[1] );
-						queryParams.TryGetValue( "oauth_token", out var token );
-						queryParams.TryGetValue( "oauth_token_secret", out var tokenSecret );
+						EtsyLogger.LogTraceRetryStarted(
+							$"Request failed. Waiting {timeSpan} before next attempt. Retry attempt {retryCount}");
+					} )
+				.ExecuteAsync(async () =>
+				{
+					var mark = Mark.CreateNew();
+					OAuthCredentials credentials = null;
 
-						if ( token != null && tokenSecret != null )
-							credentials = new OAuthCredentials( loginUrl, token, tokenSecret );
+					string absoluteUrl = BaseUrl + RequestTokenUrl;
+					var oauthParameters = authenticator.GetOAuthRequestParameters( absoluteUrl, "GET", null, requestParameters );
+					string url = authenticator.GetUrl( absoluteUrl, oauthParameters );
+
+					try
+					{
+						EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
+
+						HttpResponseMessage response = await httpClient.GetAsync( url ).ConfigureAwait( false );
+
+						var result = response.Content.ReadAsStringAsync().Result;
+
+						EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
+
+						HandleEtsyEndpointErrorResponse( result );
+
+						if ( !string.IsNullOrEmpty( result )
+						     && result.IndexOf( "login_url", StringComparison.InvariantCulture ) > -1 )
+						{
+							string loginUrl = Uri.UnescapeDataString( result.Replace( "login_url=", "" ) );
+
+							string[] temp = loginUrl.Split( '?' );
+
+							if ( temp.Length == 2 )
+							{
+								var queryParams = ParseQueryParams( temp[1] );
+								queryParams.TryGetValue( "oauth_token", out var token );
+								queryParams.TryGetValue( "oauth_token_secret", out var tokenSecret );
+
+								if ( token != null && tokenSecret != null )
+									credentials = new OAuthCredentials( loginUrl, token, tokenSecret );
+							}
+						}
 					}
-				}
+					catch ( Exception exception )
+					{
+						var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+						EtsyLogger.LogTraceException( etsyException );
+					}
 
-				return credentials;
-			}
-			catch ( Exception exception )
-			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
-				EtsyLogger.LogTraceException( etsyException );
-				throw etsyException;
-			}
+					return credentials;
+				});
 		}
 
 		/// <summary>

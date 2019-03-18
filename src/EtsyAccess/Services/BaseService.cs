@@ -20,7 +20,7 @@ namespace EtsyAccess.Services
 		protected const string BaseUrl = "https://openapi.etsy.com";
 		protected const int RetryCount = 5;
 		private const string ShopsInfoUrl = "/v2/shops/{0}";
-		private readonly string _shopName;
+		protected readonly int? shopId;
 
 		protected readonly HttpClient httpClient;
 		protected readonly OAuthenticator authenticator;
@@ -35,9 +35,14 @@ namespace EtsyAccess.Services
 			set => _additionalLogInfo = value;
 		}
 
-		public BaseService( string shopName, string consumerKey, string consumerSecret, string token, string tokenSecret )
+		public BaseService( string consumerKey, string consumerSecret ) : this( consumerKey, consumerSecret, null,
+			null, null )
 		{
-			_shopName = shopName;
+		}
+
+		public BaseService( string consumerKey, string consumerSecret, string token, string tokenSecret, int? shopId )
+		{
+			this.shopId = shopId;
 
 			httpClient = new HttpClient()
 			{
@@ -48,13 +53,15 @@ namespace EtsyAccess.Services
 		}
 
 		/// <summary>
-		///	Returns current shop info
+		///	Returns shop info
 		/// </summary>
-		public async Task< Shop > GetShopInfo()
+		/// <param name="shopName">Etsy's shop name</param>
+		/// <returns></returns>
+		public async Task< Shop > GetShopInfo( string shopName )
 		{
 			var mark = Mark.CreateNew();
 			IEnumerable< Shop > response = null;
-			string url = String.Format( ShopsInfoUrl, _shopName );
+			string url = String.Format( ShopsInfoUrl, shopName );
 
 			try
 			{
@@ -259,6 +266,9 @@ namespace EtsyAccess.Services
 
 							// handle server response maybe some error happened
 							HandleEtsyEndpointErrorResponse( responseStr );
+
+							if ( response.StatusCode != HttpStatusCode.OK )
+								throw new EtsyException( responseStr );
 						}
 						catch ( Exception exception )
 						{

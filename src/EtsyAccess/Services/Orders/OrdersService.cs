@@ -12,10 +12,10 @@ namespace EtsyAccess.Services.Orders
 {
 	public class OrdersService : BaseService, IOrdersService
 	{
-		private readonly string ReceiptsUrl = "/v2/shops/{0}/receipts?includes=Transactions,Listings,Country";
+		private readonly string ReceiptsUrl = "/v2/shops/{0}/receipts?includes=Transactions,Listings,Country&limit=100";
 
-		public OrdersService( string shopName, string consumerKey, string consumerSecret, string token, string tokenSecret ) 
-			: base( shopName, consumerKey, consumerSecret, token, tokenSecret ) { }
+		public OrdersService( string consumerKey, string consumerSecret, string token, string tokenSecret, int shopId  ) 
+			: base( consumerKey, consumerSecret, token, tokenSecret, shopId ) { }
 
 		/// <summary>
 		///	Returns receipts that were changed in the specified period in asynchronous manner
@@ -28,12 +28,10 @@ namespace EtsyAccess.Services.Orders
 			var mark = Mark.CreateNew();
 			IEnumerable< Receipt > response = null;
 
-			var shop = await GetShopInfo().ConfigureAwait( false );
-
 			long minLastModified = startDate.FromUtcTimeToEpoch();
 			long maxLastModified = endDate.FromUtcTimeToEpoch();
 
-			string url = String.Format( ReceiptsUrl + "&min_last_modified={1}&max_last_modified={2}", shop.Id,
+			string url = String.Format( ReceiptsUrl + "&min_last_modified={1}&max_last_modified={2}", shopId,
 				minLastModified, maxLastModified );
 
 			try
@@ -60,9 +58,9 @@ namespace EtsyAccess.Services.Orders
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
 		/// <returns></returns>
-		IEnumerable< Receipt > IOrdersService.GetOrders(DateTime startDate, DateTime endDate)
+		IEnumerable< Receipt > IOrdersService.GetOrders( DateTime startDate, DateTime endDate)
 		{
-			return GetOrdersAsync(startDate, endDate).GetAwaiter().GetResult();
+			return GetOrdersAsync( startDate, endDate ).GetAwaiter().GetResult();
 		}
 	}
 }

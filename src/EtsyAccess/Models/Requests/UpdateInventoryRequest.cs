@@ -12,7 +12,7 @@ namespace EtsyAccess.Models.Requests
 		[JsonProperty("sku")]
 		public string Sku { get; set; }
 		[JsonProperty("property_values")]
-		public string[] PropertyValues { get; set; }
+		public PropertyValue[] PropertyValues { get; set; }
 		[JsonProperty("offerings")]
 		public ListingOfferingRequest[] ListingOffering { get; set; }
 	}

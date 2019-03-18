@@ -15,8 +15,9 @@ namespace EtsyAccess.Services.Orders
 		/// <param name="endDate"></param>
 		/// <returns></returns>
 		IEnumerable< Receipt > GetOrders( DateTime startDate, DateTime endDate );
+		
 		/// <summary>
-		///	Returns orders asynchronously that have changes at specified period
+		///	Returns orders asynchronously that were updated in specified period
 		/// </summary>
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
@@ -26,7 +27,8 @@ namespace EtsyAccess.Services.Orders
 		/// <summary>
 		///	Returns shop info by name
 		/// </summary>
+		/// <param name="shopName">Etsy's shope name</param>
 		/// <returns>Current shop information</returns>
-		Task< Shop > GetShopInfo();
+		Task< Shop > GetShopInfo( string shopName );
 	}
 }

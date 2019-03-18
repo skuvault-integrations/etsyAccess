@@ -19,16 +19,16 @@ namespace EtsyAccess.Models
 		/// Which properties control price?
 		/// </summary>
 		[JsonProperty("price_on_property")]
-		public int[] PriceOnProperty { get; set; }
+		public long[] PriceOnProperty { get; set; }
 		/// <summary>
 		/// Which properties control quantity?
 		/// </summary>
 		[JsonProperty("quantity_on_property")]
-		public int[] QuantityOnProperty { get; set; }
+		public long[] QuantityOnProperty { get; set; }
 		/// <summary>
 		/// Which properties control SKU?
 		/// </summary>
 		[JsonProperty("sku_on_property")]
-		public int[] SkuOnProperty { get; set; }
+		public long[] SkuOnProperty { get; set; }
 	}
 }

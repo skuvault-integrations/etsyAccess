@@ -10,7 +10,7 @@ namespace EtsyAccessTests
 {
 	public class OrdersTests : BaseTest
 	{
-		[ Test ]
+		[Test]
 		public void GetOrders()
 		{
 			DateTime startDate = DateTime.Now.AddMonths(-1);
@@ -19,14 +19,6 @@ namespace EtsyAccessTests
 			var orders = this.OrdersService.GetOrders(startDate, endDate);
 
 			orders.Should().NotBeNullOrEmpty();
-		}
-
-		[ Test ]
-		public void GetShopInfoByName()
-		{
-			var shop = this.OrdersService.GetShopInfo().GetAwaiter().GetResult();
-
-			shop.Should().NotBeNull();
 		}
 	}
 }

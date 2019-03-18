@@ -24,6 +24,13 @@ namespace EtsyAccess.Services.Items
 		Task UpdateSkuQuantityAsync( string sku, int quantity );
 
 		/// <summary>
+		///	
+		/// </summary>
+		/// <param name="skusQuantities">new quantity for each sku</param>
+		/// <returns></returns>
+		Task UpdateSkusQuantityAsync( Dictionary< string, int > skusQuantities );
+
+		/// <summary>
 		/// Returns product inventory
 		/// </summary>
 		/// <param name="sku"></param>

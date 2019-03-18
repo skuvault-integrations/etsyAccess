@@ -24,7 +24,7 @@ namespace EtsyAccess.Models
 		/// A list of 0-2 properties associated with this product and their values.
 		/// </summary>
 		[JsonProperty("property_values")]
-		public string[] PropertyValues { get; set; }
+		public PropertyValue[] PropertyValues { get; set; }
 		/// <summary>
 		/// Has the product been deleted?
 		/// </summary>

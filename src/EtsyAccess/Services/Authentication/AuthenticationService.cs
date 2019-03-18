@@ -33,13 +33,16 @@ namespace EtsyAccess.Services.Authentication
 		}
 	}
 
+	/// <summary>
+	///	This service is oriented on working with OAuth 1.0 credentials.
+	/// You can easily get permanent credentials having only consumer key and secret.
+	/// </summary>
 	public class AuthenticationService : BaseService, IAuthenticationService
 	{
 		private const string RequestTokenUrl = "/v2/oauth/request_token";
 		private const string AccessTokenUrl = "/v2/oauth/access_token";
 
-		public AuthenticationService(string applicationKey, string sharedSecret) : base(null, applicationKey,
-			sharedSecret, null, null)
+		public AuthenticationService( string applicationKey, string sharedSecret ) : base( applicationKey, sharedSecret )
 		{
 		}
 

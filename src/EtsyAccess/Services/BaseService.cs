@@ -111,11 +111,18 @@ namespace EtsyAccess.Services
 
 						try
 						{
-							var httpResponse = await httpClient.GetAsync(url).ConfigureAwait(false);
+							var httpResponse = await httpClient.GetAsync( url ).ConfigureAwait( false );
 							string content = await httpResponse.Content.ReadAsStringAsync()
-								.ConfigureAwait(false);
+								.ConfigureAwait( false );
 
-							HandleEtsyEndpointErrorResponse(content);
+							// etsy errors
+							HandleEtsyEndpointErrorResponse( content );
+
+							// rate limits
+							LogRateLimits( httpResponse );
+
+							if ( httpResponse.StatusCode != HttpStatusCode.OK )
+								throw new EtsyException(content);
 
 							entityRaw = content;
 						}
@@ -202,6 +209,11 @@ namespace EtsyAccess.Services
 							// handle Etsy error
 							HandleEtsyEndpointErrorResponse( content );
 
+							LogRateLimits( httpResponse );
+
+							if ( httpResponse.StatusCode != HttpStatusCode.OK )
+								throw new EtsyException(content);
+
 							entityRaw = content;
 						}
 						catch ( Exception exception )
@@ -266,6 +278,8 @@ namespace EtsyAccess.Services
 
 							// handle server response maybe some error happened
 							HandleEtsyEndpointErrorResponse( responseStr );
+
+							LogRateLimits(  response );
 
 							if ( response.StatusCode != HttpStatusCode.OK )
 								throw new EtsyException( responseStr );
@@ -334,6 +348,22 @@ namespace EtsyAccess.Services
 				string.IsNullOrWhiteSpace( additionalInfo ) ? string.Empty : ", " + additionalInfo
 			);
 			return str;
+		}
+
+		/// <summary>
+		///	Logs API limits
+		/// </summary>
+		/// <param name="response">HTTP message</param>
+		private void LogRateLimits( HttpResponseMessage response )
+		{
+			var rateLimit = response.Headers.GetValues("X-RateLimit-Limit" )
+				.FirstOrDefault();
+			var rateLimitRemaining = response.Headers.GetValues("X-RateLimit-Remaining" )
+				.FirstOrDefault();
+
+			if ( rateLimit != null
+				&& rateLimitRemaining != null )
+				EtsyLogger.LogTrace($"Rate limit { rateLimit }, rate limit remaining { rateLimitRemaining }" );
 		}
 	}
 }

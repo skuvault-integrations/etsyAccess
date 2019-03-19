@@ -161,7 +161,7 @@ namespace EtsyAccess.Services
 
 					url += url.Contains( "offset" ) ? url.Replace( $"offset={offset - 1}", $"offset={offset}" ) : $"offset={offset}";
 
-					await GetEntitiesAsync( url, result ).ConfigureAwait(false);
+					await GetEntitiesAsync( url, result ).ConfigureAwait( false );
 				}
 			}
 			catch ( Exception exception )

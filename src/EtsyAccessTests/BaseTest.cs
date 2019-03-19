@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
+using System.Security.Policy;
 using EtsyAccess;
 using EtsyAccess.Services;
 using EtsyAccess.Services.Authentication;
@@ -9,37 +12,59 @@ using NUnit.Framework;
 
 namespace EtsyAccessTests
 {
+	public class TestCredentials
+	{
+		public string ShopName { get; set; }
+		public int ShopId { get; set; }
+		public string ApplicationKey { get; set; }
+		public string SharedSecret { get; set; }
+		public string Token { get; set; }
+		public string TokenSecret { get; set; }
+	}
+
 	public class BaseTest
 	{
-		protected const string ShopName = "SkuVaultInc";
-		protected const int ShopId = 19641381;
-
-		private const string ApplicationKey = "hmmvy1sp7fqfz43d4z6c117l";
-		private const string SharedSecret = "airddqdp3t";
-
-		private const string Token = "3168607b820c492e24d0b2f46abd96";
-		private const string TokenSecret = "8a53e2e484";
-
 		protected IOrdersService OrdersService { get; set; }
 		protected IItemsService ItemsService { get; set; }
 		protected IAuthenticationService AuthenticationService { get; set; }
+		protected TestCredentials Credentials { get; set; }
 
 		[ SetUp ]
 		public void Init()
 		{
-			var factory = new EtsyServicesFactory( ApplicationKey, SharedSecret );
+			Credentials = LoadCredentials();
 
-			OrdersService = factory.CreateOrdersService( ShopId, Token, TokenSecret );
-			ItemsService = factory.CreateItemsService( ShopId, Token, TokenSecret );
+			var factory = new EtsyServicesFactory( Credentials.ApplicationKey, Credentials.SharedSecret );
+
+			OrdersService = factory.CreateOrdersService( Credentials.ShopId, Credentials.Token, Credentials.TokenSecret );
+			ItemsService = factory.CreateItemsService( Credentials.ShopId, Credentials.Token, Credentials.TokenSecret );
 			AuthenticationService = factory.CreateAuthenticationService();
+		}
+
+		private TestCredentials LoadCredentials()
+		{
+			string path = new Uri( Path.GetDirectoryName( Assembly.GetExecutingAssembly().CodeBase ) ).LocalPath;
+
+			using( var reader = new StreamReader( path + @"\..\..\credentials.csv" ) )
+			{
+				return new TestCredentials
+				{
+					ShopName = reader.ReadLine(),
+					ShopId = int.Parse( reader.ReadLine() ),
+					ApplicationKey = reader.ReadLine(),
+					SharedSecret = reader.ReadLine(),
+					Token = reader.ReadLine(),
+					TokenSecret = reader.ReadLine()
+				};
+			}
 		}
 
 		
 		[ Test ]
 		public void GetShopInfoByName()
 		{
-			var baseService = new BaseService(ApplicationKey, SharedSecret, Token, TokenSecret, null);
-			var shop = baseService.GetShopInfo(ShopName).GetAwaiter().GetResult();
+			var baseService = new BaseService( Credentials.ApplicationKey, Credentials.SharedSecret, Credentials.Token, Credentials.TokenSecret, null );
+			var shop = baseService.GetShopInfo( Credentials.ShopName ).GetAwaiter().GetResult();
 
 			shop.Should().NotBeNull();
 		}

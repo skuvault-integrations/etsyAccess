@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Misc;
 using EtsyAccess.Models;
@@ -59,6 +60,8 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		public async Task< Shop > GetShopInfo( string shopName )
 		{
+			Condition.Requires( shopName ).IsNotNullOrEmpty();
+
 			var mark = Mark.CreateNew();
 			IEnumerable< Shop > response = null;
 			string url = String.Format( ShopsInfoUrl, shopName );
@@ -89,7 +92,7 @@ namespace EtsyAccess.Services
 		/// <param name="result"></param>
 		/// <param name="mark">Method tracing mark</param>
 		/// <returns></returns>
-		public async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, List< T > result = null, Mark mark = null )
+		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, List< T > result = null, Mark mark = null )
 		{
 			if( mark.IsBlank() )
 				mark = Mark.CreateNew();
@@ -181,7 +184,7 @@ namespace EtsyAccess.Services
 		/// <param name="url"></param>
 		///  <param name="mark"></param>
 		/// <returns></returns>
-		public async Task< T > GetEntityAsync< T >( string url, Mark mark = null )
+		protected async Task< T > GetEntityAsync< T >( string url, Mark mark = null )
 		{
 			if( mark.IsBlank() )
 				mark = Mark.CreateNew();
@@ -248,7 +251,7 @@ namespace EtsyAccess.Services
 		/// <param name="url"></param>
 		/// <param name="mark"></param>
 		/// <returns></returns>
-		public async Task PutAsync( string url, Dictionary<string, string> payload, Mark mark = null )
+		protected async Task PutAsync( string url, Dictionary<string, string> payload, Mark mark = null )
 		{
 			if( mark.IsBlank() )
 				mark = Mark.CreateNew();

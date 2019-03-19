@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using CuttingEdge.Conditions;
 
 namespace EtsyAccess.Services.Authentication
 {
@@ -20,6 +21,9 @@ namespace EtsyAccess.Services.Authentication
 
 		public OAuthenticator( string consumerKey, string consumerSecret, string token, string tokenSecret )
 		{
+			Condition.Requires( consumerKey ).IsNotNullOrEmpty();
+			Condition.Requires( consumerSecret ).IsNotNullOrEmpty();
+
 			_token = token;
 			_tokenSecret = tokenSecret;
 			_consumerKey = consumerKey;
@@ -111,20 +115,18 @@ namespace EtsyAccess.Services.Authentication
 		{
 			string signature = null;
 
-			string urlEncoded = EscapeUriData(baseUrl);
-			string encodedParameters = EscapeUriData(string.Join("&",
-				requestParameters.OrderBy(kv => kv.Key).Select(item =>
-					($"{ EscapeUriData(item.Key)}={EscapeUriData(item.Value)}"))));
+			string urlEncoded = EscapeUriData( baseUrl );
+			string encodedParameters = EscapeUriData( string.Join( "&",
+				requestParameters.OrderBy( kv => kv.Key ).Select( item =>
+					($"{ EscapeUriData( item.Key ) }={ EscapeUriData( item.Value ) }") ) ) );
 			
-			string baseString = $"{urlMethod.ToUpper()}&{urlEncoded}&{encodedParameters}";
+			string baseString = $"{ urlMethod.ToUpper() }&{ urlEncoded }&{ encodedParameters }";
 
-			HMACSHA1 hmacsha1 = new HMACSHA1( Encoding.ASCII.GetBytes( _consumerSecret + "&" + (string.IsNullOrEmpty(tokenSecret) ? "" : tokenSecret) ) );
+			HMACSHA1 hmacsha1 = new HMACSHA1( Encoding.ASCII.GetBytes( _consumerSecret + "&" + ( string.IsNullOrEmpty( tokenSecret ) ? "" : tokenSecret) ) );
 			byte[] data = Encoding.ASCII.GetBytes( baseString );
 
-			using (var stream = new MemoryStream(data))
-			{
-				signature = Convert.ToBase64String(hmacsha1.ComputeHash(stream));
-			}
+			using (var stream = new MemoryStream( data ))
+				signature = Convert.ToBase64String( hmacsha1.ComputeHash( stream ) );
 
 			return signature;
 		}
@@ -135,7 +137,7 @@ namespace EtsyAccess.Services.Authentication
 		/// <returns></returns>
 		private string GetRandomSessionNonce()
 		{
-			return Guid.NewGuid().ToString().Replace("-", "").Substring(0, 11).ToUpper();
+			return Guid.NewGuid().ToString().Replace( "-", "" ).Substring( 0, 11 ).ToUpper();
 		}
 
 		/// <summary>
@@ -144,19 +146,19 @@ namespace EtsyAccess.Services.Authentication
 		/// <param name="url"></param>
 		/// <param name="requestParameters"></param>
 		/// <returns></returns>
-		public string GetUrl(string url, Dictionary<string, string> requestParameters)
+		public string GetUrl( string url, Dictionary< string, string > requestParameters )
 		{
-			Uri uri = new Uri(url);
+			Uri uri = new Uri( url );
 			string baseUrl = uri.Scheme + "://" + uri.Host + uri.LocalPath;
 
 			var paramsBuilder = new StringBuilder();
 
-			foreach (var kv in requestParameters)
+			foreach ( var kv in requestParameters )
 			{
-				if (paramsBuilder.Length > 0)
-					paramsBuilder.Append("&");
+				if ( paramsBuilder.Length > 0 )
+					paramsBuilder.Append( "&" );
 
-				paramsBuilder.Append($"{kv.Key}={kv.Value}");
+				paramsBuilder.Append( $"{kv.Key}={kv.Value}" );
 			}
 
 			baseUrl += "?" + paramsBuilder.ToString();
@@ -191,7 +193,7 @@ namespace EtsyAccess.Services.Authentication
 		/// <returns></returns>
 		private long GetUtcEpochTime()
 		{
-			return (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
+			return (int)( DateTime.UtcNow - new DateTime( 1970, 1, 1 ) ).TotalSeconds;
 		}
 
 	}

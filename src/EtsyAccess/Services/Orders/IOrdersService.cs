@@ -23,12 +23,5 @@ namespace EtsyAccess.Services.Orders
 		/// <param name="endDate"></param>
 		/// <returns></returns>
 		Task< IEnumerable< Receipt > > GetOrdersAsync( DateTime startDate, DateTime endDate );
-
-		/// <summary>
-		///	Returns shop info by name
-		/// </summary>
-		/// <param name="shopName">Etsy's shope name</param>
-		/// <returns>Current shop information</returns>
-		Task< Shop > GetShopInfo( string shopName );
 	}
 }

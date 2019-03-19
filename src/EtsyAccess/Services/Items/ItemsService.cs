@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Misc;
 using EtsyAccess.Models;
@@ -34,6 +35,9 @@ namespace EtsyAccess.Services.Items
 		/// <returns></returns>
 		public async Task UpdateSkuQuantityAsync( string sku, int quantity )
 		{
+			Condition.Requires( sku ).IsNotNullOrEmpty();
+			Condition.Requires( quantity ).IsGreaterOrEqual( 0 );
+
 			var mark = Mark.CreateNew();
 
 			// get all listings that have products with specified sku
@@ -133,8 +137,7 @@ namespace EtsyAccess.Services.Items
 		/// <returns></returns>
 		public async Task UpdateSkusQuantityAsync( Dictionary<string, int> skusQuantities )
 		{
-			if ( skusQuantities == null || skusQuantities.Count == 0 )
-				return;
+			Condition.Requires( skusQuantities ).IsNotEmpty();
 
 			var listings = await GetListingsBySkus( skusQuantities.Keys ).ConfigureAwait( false );
 
@@ -162,6 +165,8 @@ namespace EtsyAccess.Services.Items
 		/// <returns></returns>
 		public async Task< ListingProduct > GetListingProductBySku( string sku )
 		{
+			Condition.Requires( sku ).IsNotNullOrEmpty();
+
 			var inventory = await GetListingInventoryBySku( sku ).ConfigureAwait(false);
 
 			return inventory.Products
@@ -175,6 +180,8 @@ namespace EtsyAccess.Services.Items
 		/// <returns></returns>
 		public async Task< ListingInventory > GetListingInventoryBySku( string sku )
 		{
+			Condition.Requires( sku ).IsNotNullOrEmpty();
+
 			ListingInventory listingInventory = null;
 
 			// get all listings that have products with specified sku

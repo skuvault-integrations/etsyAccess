@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Misc;
 using NLog;
@@ -52,6 +53,10 @@ namespace EtsyAccess.Services.Authentication
 		/// <returns></returns>
 		public async Task< OAuthCredentials > GetPermanentCredentials( string temporaryToken, string temporaryTokenSecret, string verifierCode )
 		{
+			Condition.Requires( temporaryToken ).IsNotNullOrEmpty();
+			Condition.Requires( temporaryTokenSecret ).IsNotNullOrEmpty();
+			Condition.Requires( verifierCode ).IsNotNullOrEmpty();
+
 			var requestParameters = new Dictionary<string, string>
 			{
 				{ "oauth_token", temporaryToken },
@@ -111,6 +116,8 @@ namespace EtsyAccess.Services.Authentication
 		/// <returns></returns>
 		public async Task<OAuthCredentials> GetTemporaryCredentials( string[] scopes )
 		{
+			Condition.Requires( scopes ).IsNotEmpty();
+
 			var requestParameters = new Dictionary<string, string>
 			{
 				{ "scopes", string.Join(" ", scopes) },

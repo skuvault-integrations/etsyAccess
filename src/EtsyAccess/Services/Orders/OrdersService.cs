@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Misc;
 using EtsyAccess.Models;
@@ -25,6 +26,8 @@ namespace EtsyAccess.Services.Orders
 		/// <returns></returns>
 		public async Task< IEnumerable< Receipt > > GetOrdersAsync( DateTime startDate, DateTime endDate )
 		{
+			Condition.Requires( startDate ).IsLessThan( endDate );
+
 			var mark = Mark.CreateNew();
 			IEnumerable< Receipt > response = null;
 

@@ -8,6 +8,7 @@ using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Misc;
 using EtsyAccess.Models;
+using EtsyAccess.Models.Configuration;
 
 namespace EtsyAccess.Services.Orders
 {
@@ -15,8 +16,9 @@ namespace EtsyAccess.Services.Orders
 	{
 		private readonly string ReceiptsUrl = "/v2/shops/{0}/receipts?includes=Transactions,Listings,Country&limit=100";
 
-		public OrdersService( string consumerKey, string consumerSecret, string token, string tokenSecret, int shopId  ) 
-			: base( consumerKey, consumerSecret, token, tokenSecret, shopId ) { }
+		public OrdersService( EtsyConfig config ) : base( config )
+		{
+		}
 
 		/// <summary>
 		///	Returns receipts that were changed in the specified period in asynchronous manner
@@ -34,7 +36,7 @@ namespace EtsyAccess.Services.Orders
 			long minLastModified = startDate.FromUtcTimeToEpoch();
 			long maxLastModified = endDate.FromUtcTimeToEpoch();
 
-			string url = String.Format( ReceiptsUrl + "&min_last_modified={1}&max_last_modified={2}", ShopId,
+			string url = String.Format( ReceiptsUrl + "&min_last_modified={1}&max_last_modified={2}", Config.ShopId,
 				minLastModified, maxLastModified );
 
 			try

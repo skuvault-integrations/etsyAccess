@@ -1,5 +1,6 @@
 ﻿using System;
 using CuttingEdge.Conditions;
+using EtsyAccess.Models.Configuration;
 using EtsyAccess.Services.Authentication;
 using EtsyAccess.Services.Items;
 using EtsyAccess.Services.Orders;
@@ -8,32 +9,22 @@ namespace EtsyAccess
 {
 	public class EtsyServicesFactory : IEtsyServicesFactory
 	{
-		private readonly string _applicationKey;
-		private readonly string _sharedSecret;
+		private readonly EtsyConfig Config;
 
-		public EtsyServicesFactory( string applicationKey, string sharedSecret )
+		public EtsyServicesFactory( EtsyConfig config )
 		{
-			Condition.Requires( applicationKey ).IsNotNull();
-			Condition.Requires( sharedSecret ).IsNotNull();
+			Condition.Requires( config ).IsNotNull();
 
-			_applicationKey = applicationKey;
-			_sharedSecret = sharedSecret;
+			this.Config = config;
 		}
 
 		/// <summary>
 		///	Returns service to work with Etsy's listings and products
 		/// </summary>
-		/// <param name="shopId"></param>
-		/// <param name="token"></param>
-		/// <param name="tokenSecret"></param>
 		/// <returns></returns>
-		public IItemsService CreateItemsService( int shopId, string token, string tokenSecret )
+		public IItemsService CreateItemsService()
 		{
-			Condition.Requires( shopId ).IsGreaterThan( 0 );
-			Condition.Requires( token ).IsNotNull();
-			Condition.Requires( tokenSecret ).IsNotNull();
-
-			return new ItemsService( _applicationKey, _sharedSecret, token, tokenSecret, shopId );
+			return new ItemsService( Config );
 		}
 
 		/// <summary>
@@ -42,23 +33,16 @@ namespace EtsyAccess
 		/// <returns></returns>
 		public IAuthenticationService CreateAuthenticationService()
 		{
-			return new AuthenticationService( _applicationKey, _sharedSecret );
+			return new AuthenticationService( Config );
 		}
 
 		/// <summary>
 		///	Returns service to work with Etsy's receipts
 		/// </summary>
-		/// <param name="shopId"></param>
-		/// <param name="token"></param>
-		/// <param name="tokenSecret"></param>
 		/// <returns></returns>
-		public IOrdersService CreateOrdersService( int shopId, string token, string tokenSecret )
+		public IOrdersService CreateOrdersService( )
 		{
-			Condition.Requires( shopId ).IsGreaterThan( 0 );
-			Condition.Requires( token ).IsNotNull();
-			Condition.Requires( tokenSecret ).IsNotNull();
-
-			return new OrdersService( _applicationKey, _sharedSecret, token, tokenSecret, shopId );
+			return new OrdersService( Config );
 		}
 	}
 }

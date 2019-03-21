@@ -23,7 +23,7 @@ namespace EtsyAccessTests
 		public void GetTemporaryCredentials()
 		{
 			var credentials = this.AuthenticationService
-				.GetTemporaryCredentials(new string[] {"listings_w transactions_r"}).GetAwaiter().GetResult();
+				.GetTemporaryCredentials( new string[] { "listings_w transactions_r" } ).GetAwaiter().GetResult();
 
 			credentials.Should().NotBeNull();
 		}

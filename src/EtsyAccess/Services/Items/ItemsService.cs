@@ -7,6 +7,7 @@ using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Misc;
 using EtsyAccess.Models;
+using EtsyAccess.Models.Configuration;
 using EtsyAccess.Models.Requests;
 using Newtonsoft.Json;
 
@@ -19,7 +20,7 @@ namespace EtsyAccess.Services.Items
 		private readonly string GetShopActiveListingsUrl = "/v2/shops/{0}/listings/inactive?limit=100";
 		private readonly string GetListingProductsInventoryUrl = "/v2/listings/{0}/inventory?write_missing_inventory=true";
 
-		public ItemsService( string consumerKey, string consumerSecret, string token, string tokenSecret, int shopId ) : base( consumerKey, consumerSecret, token, tokenSecret, shopId )
+		public ItemsService( EtsyConfig config ) : base( config )
 		{ }
 
 		public void UpdateSkuQuantity(string sku, int quantity)
@@ -245,7 +246,7 @@ namespace EtsyAccess.Services.Items
 		public async Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus )
 		{
 			var mark = Mark.CreateNew();
-			string url = String.Format( GetShopActiveListingsUrl, ShopId );
+			string url = String.Format( GetShopActiveListingsUrl, Config.ShopId );
 
 			try
 			{

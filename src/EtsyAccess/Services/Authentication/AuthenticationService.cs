@@ -13,6 +13,7 @@ using System.Web;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Misc;
+using EtsyAccess.Models.Configuration;
 using NLog;
 using NLog.Fluent;
 using NLog.LayoutRenderers.Wrappers;
@@ -26,8 +27,12 @@ namespace EtsyAccess.Services.Authentication
 		public string Token { get; private set; }
 		public string TokenSecret { get; private set; }
 
-		public OAuthCredentials(string loginUrl, string token, string tokenSecret)
+		public OAuthCredentials( string loginUrl, string token, string tokenSecret )
 		{
+			Condition.Requires( loginUrl ).IsNotNullOrEmpty();
+			Condition.Requires( token ).IsNotNullOrEmpty();
+			Condition.Requires( tokenSecret ).IsNotNullOrEmpty();
+
 			LoginUrl = loginUrl;
 			Token = token;
 			TokenSecret = tokenSecret;
@@ -43,7 +48,7 @@ namespace EtsyAccess.Services.Authentication
 		private const string RequestTokenUrl = "/v2/oauth/request_token";
 		private const string AccessTokenUrl = "/v2/oauth/access_token";
 
-		public AuthenticationService( string applicationKey, string sharedSecret ) : base( applicationKey, sharedSecret )
+		public AuthenticationService( EtsyConfig config ) : base( config )
 		{
 		}
 
@@ -63,15 +68,15 @@ namespace EtsyAccess.Services.Authentication
 				{ "oauth_verifier", verifierCode }
 			};
 
-			return await Policy.HandleResult<OAuthCredentials>(credentials => credentials == null)
+			return await Policy.HandleResult< OAuthCredentials >( credentials => credentials == null )
 				.WaitAndRetryAsync(RetryCount,
 					retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-					(entityRaw, timeSpan, retryCount, context) =>
+					( entityRaw, timeSpan, retryCount, context ) =>
 					{
 						EtsyLogger.LogTraceRetryStarted(
 							$"Request failed. Waiting {timeSpan} before next attempt. Retry attempt {retryCount}");
 					})
-				.ExecuteAsync(async () =>
+				.ExecuteAsync( async () =>
 				{
 					var mark = Mark.CreateNew();
 					OAuthCredentials credentials = null;
@@ -114,7 +119,7 @@ namespace EtsyAccess.Services.Authentication
 		/// </summary>
 		/// <param name="scopes">Permissions</param>
 		/// <returns></returns>
-		public async Task<OAuthCredentials> GetTemporaryCredentials( string[] scopes )
+		public async Task< OAuthCredentials > GetTemporaryCredentials( string[] scopes )
 		{
 			Condition.Requires( scopes ).IsNotEmpty();
 
@@ -186,7 +191,7 @@ namespace EtsyAccess.Services.Authentication
 		/// </summary>
 		/// <param name="queryParams">Query parameters</param>
 		/// <returns></returns>
-		private Dictionary<string, string> ParseQueryParams(string queryParams)
+		private Dictionary< string, string > ParseQueryParams( string queryParams )
 		{
 			var result = new Dictionary<string, string>();
 

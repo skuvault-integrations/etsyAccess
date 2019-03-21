@@ -10,6 +10,7 @@ using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Misc;
 using EtsyAccess.Models;
+using EtsyAccess.Models.Configuration;
 using EtsyAccess.Services.Authentication;
 using Newtonsoft.Json;
 using Polly;
@@ -22,7 +23,7 @@ namespace EtsyAccess.Services
 		// max total time for attempts 15 seconds (14)
 		protected const int RetryCount = 3;
 		private const string ShopsInfoUrl = "/v2/shops/{0}";
-		protected readonly int? ShopId;
+		protected readonly EtsyConfig Config;
 
 		protected readonly HttpClient HttpClient;
 		protected readonly OAuthenticator Authenticator;
@@ -37,21 +38,18 @@ namespace EtsyAccess.Services
 			set => _additionalLogInfo = value;
 		}
 
-		public BaseService( string consumerKey, string consumerSecret ) : this( consumerKey, consumerSecret, null,
-			null, null )
+		public BaseService( EtsyConfig config )
 		{
-		}
+			Condition.Requires( config ).IsNotNull();
 
-		public BaseService( string consumerKey, string consumerSecret, string token, string tokenSecret, int? shopId )
-		{
-			this.ShopId = shopId;
+			this.Config = config;
 
 			HttpClient = new HttpClient()
 			{
 				BaseAddress = new Uri( BaseUrl )
 			};
 
-			Authenticator = new OAuthenticator( consumerKey, consumerSecret, token, tokenSecret);
+			Authenticator = new OAuthenticator( Config.ApplicationKey, Config.SharedSecret, Config.Token, Config.TokenSecret );
 		}
 
 		/// <summary>
@@ -297,11 +295,6 @@ namespace EtsyAccess.Services
 
 			if ( message.IndexOf("signature_invalid", StringComparison.InvariantCulture ) > -1)
 				throw new EtsyInvalidSignatureException( message );
-
-			var errorDetailHeaderValue = response.Headers.GetValues("X-Error-Detail").FirstOrDefault();
-
-			if ( errorDetailHeaderValue != null )
-				message += String.Format(", details: {0}", errorDetailHeaderValue);
 
 			throw new EtsyServerException( message, (int)responseStatusCode);
 		}

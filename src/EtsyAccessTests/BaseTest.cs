@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Security.Policy;
 using EtsyAccess;
+using EtsyAccess.Models.Configuration;
 using EtsyAccess.Services;
 using EtsyAccess.Services.Authentication;
 using EtsyAccess.Services.Items;
@@ -27,18 +28,25 @@ namespace EtsyAccessTests
 		protected IOrdersService OrdersService { get; set; }
 		protected IItemsService ItemsService { get; set; }
 		protected IAuthenticationService AuthenticationService { get; set; }
-		protected TestCredentials Credentials { get; set; }
+		protected BaseService BaseService { get; set; }
+		protected string ShopName;
+		protected EtsyConfig Config;
 
 		[ SetUp ]
 		public void Init()
 		{
-			Credentials = LoadCredentials();
+			var credentials = LoadCredentials();
 
-			var factory = new EtsyServicesFactory( Credentials.ApplicationKey, Credentials.SharedSecret );
+			ShopName = credentials.ShopName;
+			var config = new EtsyConfig( credentials.ApplicationKey, credentials.SharedSecret, credentials.ShopId,
+				credentials.Token, credentials.TokenSecret );
 
-			OrdersService = factory.CreateOrdersService( Credentials.ShopId, Credentials.Token, Credentials.TokenSecret );
-			ItemsService = factory.CreateItemsService( Credentials.ShopId, Credentials.Token, Credentials.TokenSecret );
+			var factory = new EtsyServicesFactory( config );
+
+			OrdersService = factory.CreateOrdersService();
+			ItemsService = factory.CreateItemsService();
 			AuthenticationService = factory.CreateAuthenticationService();
+			BaseService = new BaseService( config );
 		}
 
 		private TestCredentials LoadCredentials()
@@ -47,7 +55,7 @@ namespace EtsyAccessTests
 
 			using( var reader = new StreamReader( path + @"\..\..\credentials.csv" ) )
 			{
-				return new TestCredentials
+				return new TestCredentials()
 				{
 					ShopName = reader.ReadLine(),
 					ShopId = int.Parse( reader.ReadLine() ),
@@ -62,8 +70,7 @@ namespace EtsyAccessTests
 		[ Test ]
 		public void GetShopInfoByName()
 		{
-			var baseService = new BaseService( Credentials.ApplicationKey, Credentials.SharedSecret, Credentials.Token, Credentials.TokenSecret, null );
-			var shop = baseService.GetShopInfo( Credentials.ShopName ).GetAwaiter().GetResult();
+			var shop = BaseService.GetShopInfo( ShopName ).GetAwaiter().GetResult();
 
 			shop.Should().NotBeNull();
 		}

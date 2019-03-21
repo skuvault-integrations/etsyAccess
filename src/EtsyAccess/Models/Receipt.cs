@@ -89,11 +89,13 @@ namespace EtsyAccess.Models
 		/// <summary>
 		/// An optional message from the seller
 		/// </summary>
+		[JsonIgnore]
 		[JsonProperty("message_from_seller")]
 		public string SellerMessage { get; set; }
 		/// <summary>
 		/// An optional message from the buyer
 		/// </summary>
+		[JsonIgnore]
 		[JsonProperty("message_from_buyer")]
 		public string BuyerMessage { get; set; }
 		/// <summary>

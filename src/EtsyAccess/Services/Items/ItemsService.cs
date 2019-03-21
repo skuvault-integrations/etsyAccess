@@ -245,7 +245,7 @@ namespace EtsyAccess.Services.Items
 		public async Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus )
 		{
 			var mark = Mark.CreateNew();
-			string url = String.Format( GetShopActiveListingsUrl, shopId );
+			string url = String.Format( GetShopActiveListingsUrl, ShopId );
 
 			try
 			{

@@ -34,7 +34,7 @@ namespace EtsyAccess.Services.Orders
 			long minLastModified = startDate.FromUtcTimeToEpoch();
 			long maxLastModified = endDate.FromUtcTimeToEpoch();
 
-			string url = String.Format( ReceiptsUrl + "&min_last_modified={1}&max_last_modified={2}", shopId,
+			string url = String.Format( ReceiptsUrl + "&min_last_modified={1}&max_last_modified={2}", ShopId,
 				minLastModified, maxLastModified );
 
 			try

@@ -58,7 +58,6 @@ namespace EtsyAccessTests
 				};
 			}
 		}
-
 		
 		[ Test ]
 		public void GetShopInfoByName()

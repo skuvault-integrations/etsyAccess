@@ -19,12 +19,13 @@ namespace EtsyAccess.Services
 	public class BaseService
 	{
 		protected const string BaseUrl = "https://openapi.etsy.com";
-		protected const int RetryCount = 5;
+		// max total time for attempts 15 seconds (14)
+		protected const int RetryCount = 3;
 		private const string ShopsInfoUrl = "/v2/shops/{0}";
-		protected readonly int? shopId;
+		protected readonly int? ShopId;
 
-		protected readonly HttpClient httpClient;
-		protected readonly OAuthenticator authenticator;
+		protected readonly HttpClient HttpClient;
+		protected readonly OAuthenticator Authenticator;
 		private Func< string > _additionalLogInfo;
 
 		/// <summary>
@@ -43,14 +44,14 @@ namespace EtsyAccess.Services
 
 		public BaseService( string consumerKey, string consumerSecret, string token, string tokenSecret, int? shopId )
 		{
-			this.shopId = shopId;
+			this.ShopId = shopId;
 
-			httpClient = new HttpClient()
+			HttpClient = new HttpClient()
 			{
 				BaseAddress = new Uri( BaseUrl )
 			};
 
-			authenticator = new OAuthenticator( consumerKey, consumerSecret, token, tokenSecret);
+			Authenticator = new OAuthenticator( consumerKey, consumerSecret, token, tokenSecret);
 		}
 
 		/// <summary>
@@ -94,84 +95,77 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, List< T > result = null, Mark mark = null )
 		{
-			if( mark.IsBlank() )
-				mark = Mark.CreateNew();
-
-			url = authenticator.GetUriWithOAuthQueryParameters( BaseUrl + url );
-
-			try
-			{
-				var responseContent = await Policy.HandleResult< string >( entityRaw => entityRaw == null )
-					.WaitAndRetryAsync( RetryCount,
-						retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
-						( entityRaw, timeSpan, retryCount, context ) =>
-						{
-							EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
-						})
-					.ExecuteAsync( async () =>
+			var responseContent = await Policy.Handle< EtsyNetworkException >()
+				.WaitAndRetryAsync( RetryCount,
+					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
+					( entityRaw, timeSpan, retryCount, context ) =>
 					{
-						string entityRaw = null;
-
-						try
-						{
-							var httpResponse = await httpClient.GetAsync( url ).ConfigureAwait( false );
-							string content = await httpResponse.Content.ReadAsStringAsync()
-								.ConfigureAwait( false );
-
-							// etsy errors
-							HandleEtsyEndpointErrorResponse( content );
-
-							// rate limits
-							LogRateLimits( httpResponse );
-
-							if ( httpResponse.StatusCode != HttpStatusCode.OK )
-								throw new EtsyException(content);
-
-							entityRaw = content;
-						}
-						catch ( Exception exception )
-						{
-							if ( exception is EtsyInvalidSignatureException )
-								// regenerating OAuth header
-								url = authenticator.GetUriWithOAuthQueryParameters( url );
-
-							var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
-							EtsyLogger.LogTraceException( etsyException );
-						}
-
-						return entityRaw;
-					});
-
-				var response = JsonConvert.DeserializeObject< EtsyResponse< T > >( responseContent );
-
-				if (result == null)
-					result = new List<T>();
-
-				result.AddRange( response.Results );
-
-				// handle pagination
-				if ( response.Pagination.NextPage != null 
-				     && response.Pagination.NextOffset != null )
+						EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
+					})
+				.ExecuteAsync( async () =>
 				{
-					int offset = response.Pagination.NextOffset.Value;
+					string entityRaw = null;
 
-					url = url.Replace( BaseUrl, "" );
+					try
+					{
+						if ( !url.Contains( BaseUrl ) )
+							url = BaseUrl + url;
 
-					if ( url.Contains('?') )
-						url += "&";
-					else
-						url += "?";
+						url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-					url += url.Contains( "offset" ) ? url.Replace( $"offset={offset - 1}", $"offset={offset}" ) : $"offset={offset}";
+						var httpResponse = await HttpClient.GetAsync( url ).ConfigureAwait( false );
+						string content = await httpResponse.Content.ReadAsStringAsync()
+							.ConfigureAwait( false );
 
-					await GetEntitiesAsync( url, result ).ConfigureAwait( false );
-				}
-			}
-			catch ( Exception exception )
+						// rate limits
+						LogRateLimits( httpResponse );
+
+						// etsy errors
+						ThrowIfError( httpResponse, content );
+
+						entityRaw = content;
+					}
+					catch ( Exception exception )
+					{
+						EtsyException etsyException = null;
+						string exceptionDetails = this.CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+
+						if ( exception is EtsyServerException )
+							etsyException = new EtsyException(exceptionDetails, exception );
+						else
+							etsyException = new EtsyNetworkException(exceptionDetails, exception);
+
+						EtsyLogger.LogTraceException( etsyException );
+
+						throw etsyException;
+					}
+
+					return entityRaw;
+				});
+
+			var response = JsonConvert.DeserializeObject< EtsyResponse< T > >( responseContent );
+
+			if (result == null)
+				result = new List<T>();
+
+			result.AddRange( response.Results );
+
+			// handle pagination
+			if ( response.Pagination.NextPage != null 
+			     && response.Pagination.NextOffset != null )
 			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
-				EtsyLogger.LogTraceException( etsyException );
-				throw etsyException;
+				int offset = response.Pagination.NextOffset.Value;
+
+				url = url.Replace( BaseUrl, "" );
+
+				if ( url.Contains('?') )
+					url += "&";
+				else
+					url += "?";
+
+				url += url.Contains( "offset" ) ? url.Replace( $"offset={offset - 1}", $"offset={offset}" ) : $"offset={offset}";
+
+				await GetEntitiesAsync( url, result ).ConfigureAwait( false );
 			}
 
 			return result;
@@ -186,62 +180,54 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected async Task< T > GetEntityAsync< T >( string url, Mark mark = null )
 		{
-			if( mark.IsBlank() )
-				mark = Mark.CreateNew();
-
-			url = authenticator.GetUriWithOAuthQueryParameters( BaseUrl + url );
-
-			try
-			{
-				var responseContent = await Policy.HandleResult< string >( entityRaw => entityRaw == null )
-					.WaitAndRetryAsync( RetryCount,
-						retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
-						( entityRaw, timeSpan, retryCount, context ) =>
-						{
-							EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
-						})
-					.ExecuteAsync( async () =>
+			var responseContent = await Policy.Handle< EtsyNetworkException >()
+				.WaitAndRetryAsync( RetryCount,
+					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
+					( entityRaw, timeSpan, retryCount, context ) =>
 					{
-						string entityRaw = null;
+						EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
+					})
+				.ExecuteAsync( async () =>
+				{
+					string entityRaw = null;
 
-						try
-						{
-							var httpResponse = await httpClient.GetAsync( url ).ConfigureAwait( false );
-							string content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
+					try
+					{
+						if ( !url.Contains( BaseUrl ) )
+							url = BaseUrl + url;
 
-							// handle Etsy error
-							HandleEtsyEndpointErrorResponse( content );
+						url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-							LogRateLimits( httpResponse );
+						var httpResponse = await HttpClient.GetAsync( url ).ConfigureAwait( false );
+						var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
-							if ( httpResponse.StatusCode != HttpStatusCode.OK )
-								throw new EtsyException(content);
+						LogRateLimits( httpResponse );
 
-							entityRaw = content;
-						}
-						catch ( Exception exception )
-						{
-							if ( exception is EtsyInvalidSignatureException )
-								// regenerating OAuth header
-								url = authenticator.GetUriWithOAuthQueryParameters( url );
+						ThrowIfError( httpResponse, content );
 
-							var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
-							EtsyLogger.LogTraceException( etsyException );
-						}
+						entityRaw = content;
+					}
+					catch ( Exception exception )
+					{
+						EtsyException etsyException = null;
+						string exceptionDetails = this.CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+						
+						if ( exception is EtsyServerException )
+							etsyException = new EtsyException( exceptionDetails, exception );
+						else
+							etsyException = new EtsyNetworkException( exceptionDetails, exception );
 
-						return entityRaw;
-					});
+						EtsyLogger.LogTraceException( etsyException );
 
-				var response = JsonConvert.DeserializeObject< EtsyResponseSingleEntity< T > >( responseContent );
+						throw etsyException;
+					}
 
-				return response.Result;
-			}
-			catch ( Exception exception )
-			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
-				EtsyLogger.LogTraceException( etsyException );
-				throw etsyException;
-			}
+					return entityRaw;
+				});
+
+			var response = JsonConvert.DeserializeObject< EtsyResponseSingleEntity< T > >( responseContent );
+
+			return response.Result;
 		}
 
 		/// <summary>
@@ -253,68 +239,71 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected async Task PutAsync( string url, Dictionary<string, string> payload, Mark mark = null )
 		{
-			if( mark.IsBlank() )
-				mark = Mark.CreateNew();
-
-			try
-			{
-				await Policy.Handle<EtsyException>()
-					.WaitAndRetryAsync( RetryCount,
-						retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
-						( entityRaw, timeSpan, retryCount, context ) =>
-						{
-							EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
-						})
-					.ExecuteAsync( async () =>
+			await Policy.Handle< EtsyNetworkException >()
+				.WaitAndRetryAsync( RetryCount,
+					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
+					( entityRaw, timeSpan, retryCount, context ) =>
 					{
-						try
-						{
-							var content = new FormUrlEncodedContent( payload );
+						EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
+					})
+				.ExecuteAsync( async () =>
+				{
+					try
+					{
+						var content = new FormUrlEncodedContent( payload );
 
-							if ( !url.Contains(BaseUrl) )
-								url = BaseUrl + url;
+						if ( !url.Contains(BaseUrl) )
+							url = BaseUrl + url;
 
-							url = authenticator.GetUriWithOAuthQueryParameters( url, "PUT", payload );
+						url = Authenticator.GetUriWithOAuthQueryParameters( url, "PUT", payload );
 
-							var response = await httpClient.PutAsync( url, content ).ConfigureAwait( false );
-							string responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+						var response = await HttpClient.PutAsync( url, content ).ConfigureAwait( false );
+						var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-							// handle server response maybe some error happened
-							HandleEtsyEndpointErrorResponse( responseStr );
+						LogRateLimits(  response );
 
-							LogRateLimits(  response );
+						// handle server response maybe some error happened
+						ThrowIfError( response, responseStr );
+					}
+					catch ( Exception exception )
+					{
+						EtsyException etsyException = null;
+						string exceptionDetails = this.CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 
-							if ( response.StatusCode != HttpStatusCode.OK )
-								throw new EtsyException( responseStr );
-						}
-						catch ( Exception exception )
-						{
-							var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
-							EtsyLogger.LogTraceException( etsyException );
+						if ( exception is EtsyServerException )
+							etsyException = new EtsyException(exceptionDetails, exception );
+						else
+							etsyException = new EtsyNetworkException(exceptionDetails, exception);
 
-							throw etsyException;
-						}
-					});
-			}
-			catch (Exception exception)
-			{
-				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
-				EtsyLogger.LogTraceException( etsyException );
-				throw etsyException;
-			}
+						EtsyLogger.LogTraceException( etsyException );
+
+						throw etsyException;
+					}
+				});
 		}
 
 		/// <summary>
 		///	Handles Etsy server error responses
 		/// </summary>
-		/// <param name="response"></param>
-		protected void HandleEtsyEndpointErrorResponse( string response )
+		/// <param name="response">Http response</param>
+		/// <param name="message">response message</param>
+		protected void ThrowIfError( HttpResponseMessage response, string message )
 		{
-			if ( string.IsNullOrEmpty(response) )
+			HttpStatusCode responseStatusCode = response.StatusCode;
+
+			if ( responseStatusCode == HttpStatusCode.OK
+					|| responseStatusCode == HttpStatusCode.Created )
 				return;
 
-			if ( response.IndexOf("signature_invalid", StringComparison.InvariantCulture ) > -1)
-				throw new EtsyInvalidSignatureException( response );
+			if ( message.IndexOf("signature_invalid", StringComparison.InvariantCulture ) > -1)
+				throw new EtsyInvalidSignatureException( message );
+
+			var errorDetailHeaderValue = response.Headers.GetValues("X-Error-Detail").FirstOrDefault();
+
+			if ( errorDetailHeaderValue != null )
+				message += String.Format(", details: {0}", errorDetailHeaderValue);
+
+			throw new EtsyServerException( message, (int)responseStatusCode);
 		}
 
 		/// <summary>

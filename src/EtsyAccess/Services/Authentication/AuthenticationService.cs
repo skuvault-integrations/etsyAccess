@@ -79,15 +79,15 @@ namespace EtsyAccess.Services.Authentication
 
 					try
 					{
-						var oauthParameters = authenticator.GetOAuthRequestParameters( url, "GET", temporaryTokenSecret, requestParameters );
-						url = authenticator.GetUrl( url, oauthParameters );
+						var oauthParameters = Authenticator.GetOAuthRequestParameters( url, "GET", temporaryTokenSecret, requestParameters );
+						url = Authenticator.GetUrl( url, oauthParameters );
 
 						EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-						HttpResponseMessage response = await httpClient.GetAsync( url ).ConfigureAwait( false );
+						HttpResponseMessage response = await HttpClient.GetAsync( url ).ConfigureAwait( false );
 						var result = response.Content.ReadAsStringAsync().Result;
 
-						HandleEtsyEndpointErrorResponse( result );
+						ThrowIfError( response, result );
 
 						EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 
@@ -138,20 +138,20 @@ namespace EtsyAccess.Services.Authentication
 					OAuthCredentials credentials = null;
 
 					string absoluteUrl = BaseUrl + RequestTokenUrl;
-					var oauthParameters = authenticator.GetOAuthRequestParameters( absoluteUrl, "GET", null, requestParameters );
-					string url = authenticator.GetUrl( absoluteUrl, oauthParameters );
+					var oauthParameters = Authenticator.GetOAuthRequestParameters( absoluteUrl, "GET", null, requestParameters );
+					string url = Authenticator.GetUrl( absoluteUrl, oauthParameters );
 
 					try
 					{
 						EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-						HttpResponseMessage response = await httpClient.GetAsync( url ).ConfigureAwait( false );
+						HttpResponseMessage response = await HttpClient.GetAsync( url ).ConfigureAwait( false );
 
 						var result = response.Content.ReadAsStringAsync().Result;
 
 						EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 
-						HandleEtsyEndpointErrorResponse( result );
+						ThrowIfError( response, result );
 
 						if ( !string.IsNullOrEmpty( result )
 						     && result.IndexOf( "login_url", StringComparison.InvariantCulture ) > -1 )

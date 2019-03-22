@@ -6,17 +6,17 @@ using System.Text;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
-using EtsyAccess.Misc;
+using EtsyAccess.Shared;
 using EtsyAccess.Models;
 using EtsyAccess.Models.Configuration;
 
 namespace EtsyAccess.Services.Orders
 {
-	public class OrdersService : BaseService, IOrdersService
+	public class EtsyOrdersService : BaseService, IEtsyOrdersService
 	{
 		private readonly string ReceiptsUrl = "/v2/shops/{0}/receipts?includes=Transactions,Listings,Country&limit=100";
 
-		public OrdersService( EtsyConfig config ) : base( config )
+		public EtsyOrdersService( EtsyConfig config ) : base( config )
 		{
 		}
 
@@ -63,7 +63,7 @@ namespace EtsyAccess.Services.Orders
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
 		/// <returns></returns>
-		IEnumerable< Receipt > IOrdersService.GetOrders( DateTime startDate, DateTime endDate)
+		IEnumerable< Receipt > IEtsyOrdersService.GetOrders( DateTime startDate, DateTime endDate)
 		{
 			return GetOrdersAsync( startDate, endDate ).GetAwaiter().GetResult();
 		}

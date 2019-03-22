@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace EtsyAccess.Services.Authentication
 {
-	public interface IAuthenticationService
+	public interface IEtsyAuthenticationService
 	{
 		Task< OAuthCredentials > GetTemporaryCredentials( string[] scopes );
 		Task< OAuthCredentials > GetPermanentCredentials( string temporaryToken, string temporaryTokenSecret, string verifierCode );

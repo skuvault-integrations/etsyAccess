@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Web;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
-using EtsyAccess.Misc;
+using EtsyAccess.Shared;
 using EtsyAccess.Models.Configuration;
 using NLog;
 using NLog.Fluent;
@@ -43,12 +43,12 @@ namespace EtsyAccess.Services.Authentication
 	///	This service is oriented on working with OAuth 1.0 credentials.
 	/// You can easily get permanent credentials having only consumer key and secret.
 	/// </summary>
-	public class AuthenticationService : BaseService, IAuthenticationService
+	public class EtsyAuthenticationService : BaseService, IEtsyAuthenticationService
 	{
 		private const string RequestTokenUrl = "/v2/oauth/request_token";
 		private const string AccessTokenUrl = "/v2/oauth/access_token";
 
-		public AuthenticationService( EtsyConfig config ) : base( config )
+		public EtsyAuthenticationService( EtsyConfig config ) : base( config )
 		{
 		}
 
@@ -62,6 +62,8 @@ namespace EtsyAccess.Services.Authentication
 			Condition.Requires( temporaryTokenSecret ).IsNotNullOrEmpty();
 			Condition.Requires( verifierCode ).IsNotNullOrEmpty();
 
+			var mark = Mark.CreateNew();
+
 			var requestParameters = new Dictionary<string, string>
 			{
 				{ "oauth_token", temporaryToken },
@@ -69,18 +71,17 @@ namespace EtsyAccess.Services.Authentication
 			};
 
 			return await Policy.HandleResult< OAuthCredentials >( credentials => credentials == null )
-				.WaitAndRetryAsync(RetryCount,
+				.WaitAndRetryAsync( Config.RetryAttempts,
 					retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
 					( entityRaw, timeSpan, retryCount, context ) =>
 					{
-						EtsyLogger.LogTraceRetryStarted(
-							$"Request failed. Waiting {timeSpan} before next attempt. Retry attempt {retryCount}");
+						string retryDetails = CreateMethodCallInfo( AccessTokenUrl, mark, additionalInfo: this.AdditionalLogInfo() );
+						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 					})
 				.ExecuteAsync( async () =>
 				{
-					var mark = Mark.CreateNew();
 					OAuthCredentials credentials = null;
-					string url = BaseUrl + AccessTokenUrl;
+					string url = Config.ApiBaseUrl + AccessTokenUrl;
 
 					try
 					{
@@ -123,6 +124,8 @@ namespace EtsyAccess.Services.Authentication
 		{
 			Condition.Requires( scopes ).IsNotEmpty();
 
+			var mark = Mark.CreateNew();
+
 			var requestParameters = new Dictionary<string, string>
 			{
 				{ "scopes", string.Join(" ", scopes) },
@@ -130,19 +133,19 @@ namespace EtsyAccess.Services.Authentication
 			};
 
 			return await Policy.HandleResult<OAuthCredentials>( credentials => credentials == null )
-				.WaitAndRetryAsync( RetryCount,
-					retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+				.WaitAndRetryAsync( Config.RetryAttempts,
+					retryAttempt => TimeSpan.FromSeconds( Math.Pow(2, retryAttempt) ),
 					(entityRaw, timeSpan, retryCount, context) =>
 					{
-						EtsyLogger.LogTraceRetryStarted(
-							$"Request failed. Waiting {timeSpan} before next attempt. Retry attempt {retryCount}");
+						string retryDetails = CreateMethodCallInfo( RequestTokenUrl, mark, additionalInfo: this.AdditionalLogInfo() );
+						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 					} )
 				.ExecuteAsync(async () =>
 				{
-					var mark = Mark.CreateNew();
 					OAuthCredentials credentials = null;
 
-					string absoluteUrl = BaseUrl + RequestTokenUrl;
+					string absoluteUrl = Config.ApiBaseUrl + RequestTokenUrl;
+
 					var oauthParameters = Authenticator.GetOAuthRequestParameters( absoluteUrl, "GET", null, requestParameters );
 					string url = Authenticator.GetUrl( absoluteUrl, oauthParameters );
 

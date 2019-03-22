@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace EtsyAccess.Misc
+namespace EtsyAccess.Shared
 {
 	public class Mark
 	{

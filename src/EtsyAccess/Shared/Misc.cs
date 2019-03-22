@@ -4,7 +4,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace EtsyAccess.Misc
+namespace EtsyAccess.Shared
 {
 	public static class Misc
 	{

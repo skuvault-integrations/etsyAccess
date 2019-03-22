@@ -16,7 +16,7 @@ namespace EtsyAccessTests
 			DateTime startDate = DateTime.Now.AddMonths(-1);
 			DateTime endDate = DateTime.Now;
 
-			var orders = this.OrdersService.GetOrders(startDate, endDate);
+			var orders = this.EtsyOrdersService.GetOrders(startDate, endDate);
 
 			orders.Should().NotBeNullOrEmpty();
 		}

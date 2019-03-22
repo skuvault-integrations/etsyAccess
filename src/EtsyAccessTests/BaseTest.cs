@@ -25,9 +25,9 @@ namespace EtsyAccessTests
 
 	public class BaseTest
 	{
-		protected IOrdersService OrdersService { get; set; }
-		protected IItemsService ItemsService { get; set; }
-		protected IAuthenticationService AuthenticationService { get; set; }
+		protected IEtsyOrdersService EtsyOrdersService { get; set; }
+		protected IEtsyItemsService EtsyItemsService { get; set; }
+		protected IEtsyAuthenticationService EtsyAuthenticationService { get; set; }
 		protected BaseService BaseService { get; set; }
 		protected string ShopName;
 		protected EtsyConfig Config;
@@ -43,9 +43,9 @@ namespace EtsyAccessTests
 
 			var factory = new EtsyServicesFactory( config );
 
-			OrdersService = factory.CreateOrdersService();
-			ItemsService = factory.CreateItemsService();
-			AuthenticationService = factory.CreateAuthenticationService();
+			EtsyOrdersService = factory.CreateOrdersService();
+			EtsyItemsService = factory.CreateItemsService();
+			EtsyAuthenticationService = factory.CreateAuthenticationService();
 			BaseService = new BaseService( config );
 		}
 

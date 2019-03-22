@@ -9,40 +9,40 @@ namespace EtsyAccess
 {
 	public class EtsyServicesFactory : IEtsyServicesFactory
 	{
-		private readonly EtsyConfig Config;
+		private readonly EtsyConfig _config;
 
 		public EtsyServicesFactory( EtsyConfig config )
 		{
 			Condition.Requires( config ).IsNotNull();
 
-			this.Config = config;
+			_config = config;
 		}
 
 		/// <summary>
 		///	Returns service to work with Etsy's listings and products
 		/// </summary>
 		/// <returns></returns>
-		public IItemsService CreateItemsService()
+		public IEtsyItemsService CreateItemsService()
 		{
-			return new ItemsService( Config );
+			return new EtsyItemsService( _config );
 		}
 
 		/// <summary>
 		///	Returns service to work with credentials
 		/// </summary>
 		/// <returns></returns>
-		public IAuthenticationService CreateAuthenticationService()
+		public IEtsyAuthenticationService CreateAuthenticationService()
 		{
-			return new AuthenticationService( Config );
+			return new EtsyAuthenticationService( _config );
 		}
 
 		/// <summary>
 		///	Returns service to work with Etsy's receipts
 		/// </summary>
 		/// <returns></returns>
-		public IOrdersService CreateOrdersService( )
+		public IEtsyOrdersService CreateOrdersService( )
 		{
-			return new OrdersService( Config );
+			return new EtsyOrdersService( _config );
 		}
 	}
 }

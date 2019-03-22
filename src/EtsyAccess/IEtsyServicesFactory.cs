@@ -9,8 +9,8 @@ namespace EtsyAccess
 {
 	public interface IEtsyServicesFactory
 	{
-		IAuthenticationService CreateAuthenticationService();
-		IOrdersService CreateOrdersService();
-		IItemsService CreateItemsService();
+		IEtsyAuthenticationService CreateAuthenticationService();
+		IEtsyOrdersService CreateOrdersService();
+		IEtsyItemsService CreateItemsService();
 	}
 }

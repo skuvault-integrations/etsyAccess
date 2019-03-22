@@ -17,10 +17,10 @@ namespace EtsyAccessTests
 			string sku = "testSku1";
 			int quantity = 5;
 
-			this.ItemsService.UpdateSkuQuantity( sku, quantity );
+			this.EtsyItemsService.UpdateSkuQuantity( sku, quantity );
 
 			// assert
-			var inventory = this.ItemsService.GetListingProductBySku( sku ).GetAwaiter().GetResult();
+			var inventory = this.EtsyItemsService.GetListingProductBySku( sku ).GetAwaiter().GetResult();
 
 			inventory.Should().NotBeNull();
 			inventory.Offerings.Should().NotBeNullOrEmpty();
@@ -41,16 +41,16 @@ namespace EtsyAccessTests
 				{ sku2, sku2Quantity }
 			};
 
-			this.ItemsService.UpdateSkusQuantityAsync(quantities).GetAwaiter().GetResult();
+			this.EtsyItemsService.UpdateSkusQuantityAsync(quantities).GetAwaiter().GetResult();
 
 			// assert
-			var skuInventory = this.ItemsService.GetListingProductBySku( sku ).GetAwaiter().GetResult();
+			var skuInventory = this.EtsyItemsService.GetListingProductBySku( sku ).GetAwaiter().GetResult();
 
 			skuInventory.Should().NotBeNull();
 			skuInventory.Offerings.Should().NotBeNullOrEmpty();
 			skuInventory.Offerings.First().Quantity.Should().Be( skuQuantity );
 
-			var sku2Inventory = this.ItemsService.GetListingProductBySku( sku2 ).GetAwaiter().GetResult();
+			var sku2Inventory = this.EtsyItemsService.GetListingProductBySku( sku2 ).GetAwaiter().GetResult();
 
 			sku2Inventory.Should().NotBeNull();
 			sku2Inventory.Offerings.Should().NotBeNullOrEmpty();

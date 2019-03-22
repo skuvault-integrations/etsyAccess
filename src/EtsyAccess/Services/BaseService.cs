@@ -8,9 +8,10 @@ using System.Text;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
-using EtsyAccess.Misc;
+using EtsyAccess.Shared;
 using EtsyAccess.Models;
 using EtsyAccess.Models.Configuration;
+using EtsyAccess.Models.Throttling;
 using EtsyAccess.Services.Authentication;
 using Newtonsoft.Json;
 using Polly;
@@ -19,15 +20,12 @@ namespace EtsyAccess.Services
 {
 	public class BaseService
 	{
-		protected const string BaseUrl = "https://openapi.etsy.com";
-		// max total time for attempts 15 seconds (14)
-		protected const int RetryCount = 3;
-		private const string ShopsInfoUrl = "/v2/shops/{0}";
 		protected readonly EtsyConfig Config;
-
 		protected readonly HttpClient HttpClient;
 		protected readonly OAuthenticator Authenticator;
 		private Func< string > _additionalLogInfo;
+
+		private const string ShopsInfoUrl = "/v2/shops/{0}";
 
 		/// <summary>
 		///	Extra logging information
@@ -46,7 +44,7 @@ namespace EtsyAccess.Services
 
 			HttpClient = new HttpClient()
 			{
-				BaseAddress = new Uri( BaseUrl )
+				BaseAddress = new Uri( Config.ApiBaseUrl )
 			};
 
 			Authenticator = new OAuthenticator( Config.ApplicationKey, Config.SharedSecret, Config.Token, Config.TokenSecret );
@@ -87,18 +85,19 @@ namespace EtsyAccess.Services
 		///	Returns entities asynchronously
 		/// </summary>
 		/// <typeparam name="T">Entities that should be received from service endpoint</typeparam>
-		/// <param name="url">Relative url to endpoint</param>
+		/// <param name="url">Url to endpoint</param>
 		/// <param name="result"></param>
 		/// <param name="mark">Method tracing mark</param>
 		/// <returns></returns>
 		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, List< T > result = null, Mark mark = null )
 		{
 			var responseContent = await Policy.Handle< EtsyNetworkException >()
-				.WaitAndRetryAsync( RetryCount,
+				.WaitAndRetryAsync( Config.RetryAttempts,
 					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
 					( entityRaw, timeSpan, retryCount, context ) =>
 					{
-						EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
+						string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 					})
 				.ExecuteAsync( async () =>
 				{
@@ -106,8 +105,8 @@ namespace EtsyAccess.Services
 
 					try
 					{
-						if ( !url.Contains( BaseUrl ) )
-							url = BaseUrl + url;
+						if ( !url.Contains( Config.ApiBaseUrl ) )
+							url = Config.ApiBaseUrl + url;
 
 						url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
@@ -115,10 +114,8 @@ namespace EtsyAccess.Services
 						string content = await httpResponse.Content.ReadAsStringAsync()
 							.ConfigureAwait( false );
 
-						// rate limits
-						LogRateLimits( httpResponse );
+						LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
 
-						// etsy errors
 						ThrowIfError( httpResponse, content );
 
 						entityRaw = content;
@@ -149,19 +146,15 @@ namespace EtsyAccess.Services
 			result.AddRange( response.Results );
 
 			// handle pagination
-			if ( response.Pagination.NextPage != null 
-			     && response.Pagination.NextOffset != null )
+			if ( ( response.Pagination.NextPage != null )
+			     && ( response.Pagination.NextOffset != null ) )
 			{
-				int offset = response.Pagination.NextOffset.Value;
+				int nextOffset = response.Pagination.NextPage.Value;
+				int currentOffset = response.Pagination.EffectiveOffset;
 
-				url = url.Replace( BaseUrl, "" );
-
-				if ( url.Contains('?') )
-					url += "&";
-				else
-					url += "?";
-
-				url += url.Contains( "offset" ) ? url.Replace( $"offset={offset - 1}", $"offset={offset}" ) : $"offset={offset}";
+				// remove current offset if exists
+				url = url.Replace( String.Format("&offset={0}", currentOffset), "" );
+				url += String.Format( "&offset={0}", nextOffset );
 
 				await GetEntitiesAsync( url, result ).ConfigureAwait( false );
 			}
@@ -179,11 +172,12 @@ namespace EtsyAccess.Services
 		protected async Task< T > GetEntityAsync< T >( string url, Mark mark = null )
 		{
 			var responseContent = await Policy.Handle< EtsyNetworkException >()
-				.WaitAndRetryAsync( RetryCount,
+				.WaitAndRetryAsync( Config.RetryAttempts,
 					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
 					( entityRaw, timeSpan, retryCount, context ) =>
 					{
-						EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
+						string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 					})
 				.ExecuteAsync( async () =>
 				{
@@ -191,15 +185,15 @@ namespace EtsyAccess.Services
 
 					try
 					{
-						if ( !url.Contains( BaseUrl ) )
-							url = BaseUrl + url;
+						if ( !url.Contains( Config.ApiBaseUrl ) )
+							url = Config.ApiBaseUrl + url;
 
 						url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
 						var httpResponse = await HttpClient.GetAsync( url ).ConfigureAwait( false );
 						var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
-						LogRateLimits( httpResponse );
+						LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
 
 						ThrowIfError( httpResponse, content );
 
@@ -238,11 +232,12 @@ namespace EtsyAccess.Services
 		protected async Task PutAsync( string url, Dictionary<string, string> payload, Mark mark = null )
 		{
 			await Policy.Handle< EtsyNetworkException >()
-				.WaitAndRetryAsync( RetryCount,
+				.WaitAndRetryAsync( Config.RetryAttempts,
 					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
 					( entityRaw, timeSpan, retryCount, context ) =>
 					{
-						EtsyLogger.LogTraceRetryStarted($"Request failed. Waiting { timeSpan } before next attempt. Retry attempt { retryCount }");
+						string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 					})
 				.ExecuteAsync( async () =>
 				{
@@ -250,17 +245,16 @@ namespace EtsyAccess.Services
 					{
 						var content = new FormUrlEncodedContent( payload );
 
-						if ( !url.Contains(BaseUrl) )
-							url = BaseUrl + url;
+						if ( !url.Contains( Config.ApiBaseUrl ) )
+							url = Config.ApiBaseUrl + url;
 
 						url = Authenticator.GetUriWithOAuthQueryParameters( url, "PUT", payload );
 
 						var response = await HttpClient.PutAsync( url, content ).ConfigureAwait( false );
 						var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+						
+						LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
 
-						LogRateLimits(  response );
-
-						// handle server response maybe some error happened
 						ThrowIfError( response, responseStr );
 					}
 					catch ( Exception exception )
@@ -316,18 +310,18 @@ namespace EtsyAccess.Services
 
 			if ( !string.IsNullOrEmpty( url ) )
 			{
-				Uri uri = new Uri( url.Contains( BaseUrl ) ? url : BaseUrl + url );
+				Uri uri = new Uri( url.Contains( Config.ApiBaseUrl ) ? url : Config.ApiBaseUrl + url );
 
 				serviceEndPoint = uri.LocalPath;
 				requestParameters = uri.Query;
 			}
 
 			var str = string.Format(
-				"{{MethodName: {0}, Mark: '{1}', ServiceEndPoint: {2}, {3} {4}{5}}}",
+				"{{MethodName: {0}, Mark: '{1}', ServiceEndPoint: '{2}', {3} {4}{5}{6}}}",
 				memberName,
 				mark ?? Mark.Blank(),
-				string.IsNullOrWhiteSpace(serviceEndPoint) ? string.Empty : serviceEndPoint,
-				string.IsNullOrWhiteSpace(requestParameters) ? string.Empty : ", RequestParameters: " + requestParameters,
+				string.IsNullOrWhiteSpace( serviceEndPoint ) ? string.Empty : serviceEndPoint,
+				string.IsNullOrWhiteSpace( requestParameters ) ? string.Empty : ", RequestParameters: " + requestParameters,
 				string.IsNullOrWhiteSpace( errors ) ? string.Empty : ", Errors:" + errors,
 				string.IsNullOrWhiteSpace( methodResult ) ? string.Empty : ", Result:" + methodResult,
 				string.IsNullOrWhiteSpace( additionalInfo ) ? string.Empty : ", " + additionalInfo
@@ -339,16 +333,34 @@ namespace EtsyAccess.Services
 		///	Logs API limits
 		/// </summary>
 		/// <param name="response">HTTP message</param>
-		private void LogRateLimits( HttpResponseMessage response )
+		/// <param name="info">extra information</param>
+		private void LogRateLimits( HttpResponseMessage response, string info )
 		{
+			var limits = GetEtsyLimits( response );
+
+			if ( limits != null )
+				EtsyLogger.LogTrace( String.Format( "{0}, Total calls: {1}, Remaining calls: {2} ", info, limits.TotalAvailableRequests, limits.CallsRemaining ));
+		}
+
+		/// <summary>
+		///	Extracts API limits from server response
+		/// </summary>
+		/// <param name="response"></param>
+		/// <returns></returns>
+		private EtsyLimits GetEtsyLimits( HttpResponseMessage response )
+		{
+			EtsyLimits limits = null;
+
 			var rateLimit = response.Headers.GetValues("X-RateLimit-Limit" )
 				.FirstOrDefault();
 			var rateLimitRemaining = response.Headers.GetValues("X-RateLimit-Remaining" )
 				.FirstOrDefault();
 
-			if ( rateLimit != null
-				&& rateLimitRemaining != null )
-				EtsyLogger.LogTrace($"Rate limit { rateLimit }, rate limit remaining { rateLimitRemaining }" );
+			if ( ( rateLimit != null )
+				   && (rateLimitRemaining != null ) )
+				limits = new EtsyLimits( int.Parse( rateLimit ), int.Parse( rateLimitRemaining ) );
+
+			return limits;
 		}
 	}
 }

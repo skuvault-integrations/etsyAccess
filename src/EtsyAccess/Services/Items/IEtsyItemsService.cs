@@ -6,7 +6,7 @@ using EtsyAccess.Models;
 
 namespace EtsyAccess.Services.Items
 {
-	public interface IItemsService
+	public interface IEtsyItemsService
 	{
 		/// <summary>
 		/// Updates sku quantity

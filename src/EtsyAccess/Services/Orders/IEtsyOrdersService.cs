@@ -6,7 +6,7 @@ using EtsyAccess.Models;
 
 namespace EtsyAccess.Services.Orders
 {
-	public interface IOrdersService
+	public interface IEtsyOrdersService
 	{
 		/// <summary>
 		///	Returns orders that have changes at specified period

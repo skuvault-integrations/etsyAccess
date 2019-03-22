@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using Netco.Logging;
 
-namespace EtsyAccess.Misc
+namespace EtsyAccess.Shared
 {
 	public class EtsyLogger
 	{
@@ -60,9 +60,10 @@ namespace EtsyAccess.Misc
 			TraceLog( "Trace info", info );
 		}
 
-		public static void LogTraceRetryStarted( string info )
+		public static void LogTraceRetryStarted( int delaySeconds, int attempt, string info )
 		{
-			TraceLog( "TraceRetryStarted info", info );
+			info = String.Format( "{0}, Delay: {0}s, Attempt: {1} ", info, delaySeconds, attempt );
+			TraceLog( "Trace info", info );
 		}
 
 		public static void LogTraceRetryEnd( string info )

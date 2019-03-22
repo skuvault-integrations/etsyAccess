@@ -31,7 +31,7 @@ namespace EtsyAccess.Services.Authentication
 		}
 
 		/// <summary>
-		///	
+		///	Returns url with OAuth 1.0 query parameters
 		/// </summary>
 		/// <param name="url"></param>
 		/// <param name="methodName"></param>
@@ -158,12 +158,10 @@ namespace EtsyAccess.Services.Authentication
 				if ( paramsBuilder.Length > 0 )
 					paramsBuilder.Append( "&" );
 
-				paramsBuilder.Append( $"{kv.Key}={kv.Value}" );
+				paramsBuilder.Append( String.Format( "{0}={1}", kv.Key, kv.Value ) );
 			}
 
-			baseUrl += "?" + paramsBuilder.ToString();
-
-			return baseUrl;
+			return baseUrl + "?" + paramsBuilder.ToString();
 		}
 
 		/// <summary>

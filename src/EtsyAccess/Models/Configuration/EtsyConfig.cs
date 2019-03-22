@@ -28,6 +28,17 @@ namespace EtsyAccess.Models.Configuration
 		/// </summary>
 		public string TokenSecret { get; private set; }
 
+		/// <summary>
+		///	API url
+		/// </summary>
+		public readonly string ApiBaseUrl = "https://openapi.etsy.com";
+
+		/// <summary>
+		///	Max retry attempts if we get network errors ( total time for attempts over 14 seconds)
+		/// 
+		/// </summary>
+		public readonly int RetryAttempts = 3;
+
 		public EtsyConfig( string applicationKey, string sharedSecret )
 		{
 			Condition.Requires( applicationKey ).IsNotNullOrEmpty();

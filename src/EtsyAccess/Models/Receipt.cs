@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using EtsyAccess.Misc;
+using EtsyAccess.Shared;
 using Newtonsoft.Json;
 
 namespace EtsyAccess.Models

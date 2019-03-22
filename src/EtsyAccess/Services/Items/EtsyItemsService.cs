@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
-using EtsyAccess.Misc;
+using EtsyAccess.Shared;
 using EtsyAccess.Models;
 using EtsyAccess.Models.Configuration;
 using EtsyAccess.Models.Requests;
@@ -13,14 +13,13 @@ using Newtonsoft.Json;
 
 namespace EtsyAccess.Services.Items
 {
-	public class ItemsService : BaseService, IItemsService
+	public class EtsyItemsService : BaseService, IEtsyItemsService
 	{
 		private readonly string UpdateListingProductQuantityUrl = "/v2/listings/{0}/inventory";
-		// for test purposes: in prod replace "inactive"
-		private readonly string GetShopActiveListingsUrl = "/v2/shops/{0}/listings/inactive?limit=100";
+		private readonly string GetShopActiveListingsUrl = "/v2/shops/{0}/listings/active?limit=100";
 		private readonly string GetListingProductsInventoryUrl = "/v2/listings/{0}/inventory?write_missing_inventory=true";
 
-		public ItemsService( EtsyConfig config ) : base( config )
+		public EtsyItemsService( EtsyConfig config ) : base( config )
 		{ }
 
 		public void UpdateSkuQuantity(string sku, int quantity)
@@ -168,10 +167,15 @@ namespace EtsyAccess.Services.Items
 		{
 			Condition.Requires( sku ).IsNotNullOrEmpty();
 
-			var inventory = await GetListingInventoryBySku( sku ).ConfigureAwait(false);
+			ListingProduct listingProduct = null;
 
-			return inventory.Products
-					.FirstOrDefault( product => product.Sku != null && product.Sku.ToLower().Equals( sku.ToLower() ) );
+			var inventory = await GetListingInventoryBySku( sku ).ConfigureAwait( false );
+
+			if ( inventory != null )
+				listingProduct = inventory.Products
+								.FirstOrDefault( product => product.Sku != null && product.Sku.ToLower().Equals( sku.ToLower() ) );
+
+			return listingProduct;
 		}
 
 		/// <summary>

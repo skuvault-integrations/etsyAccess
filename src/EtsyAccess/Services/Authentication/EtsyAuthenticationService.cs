@@ -45,9 +45,6 @@ namespace EtsyAccess.Services.Authentication
 	/// </summary>
 	public class EtsyAuthenticationService : BaseService, IEtsyAuthenticationService
 	{
-		private const string RequestTokenUrl = "/v2/oauth/request_token";
-		private const string AccessTokenUrl = "/v2/oauth/access_token";
-
 		public EtsyAuthenticationService( EtsyConfig config ) : base( config )
 		{
 		}
@@ -75,13 +72,13 @@ namespace EtsyAccess.Services.Authentication
 					retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
 					( entityRaw, timeSpan, retryCount, context ) =>
 					{
-						string retryDetails = CreateMethodCallInfo( AccessTokenUrl, mark, additionalInfo: this.AdditionalLogInfo() );
+						string retryDetails = CreateMethodCallInfo( EtsyEndPoint.GetAccessTokenUrl, mark, additionalInfo: this.AdditionalLogInfo() );
 						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 					})
 				.ExecuteAsync( async () =>
 				{
 					OAuthCredentials credentials = null;
-					string url = Config.ApiBaseUrl + AccessTokenUrl;
+					string url = Config.ApiBaseUrl + EtsyEndPoint.GetAccessTokenUrl;
 
 					try
 					{
@@ -137,14 +134,14 @@ namespace EtsyAccess.Services.Authentication
 					retryAttempt => TimeSpan.FromSeconds( Math.Pow(2, retryAttempt) ),
 					(entityRaw, timeSpan, retryCount, context) =>
 					{
-						string retryDetails = CreateMethodCallInfo( RequestTokenUrl, mark, additionalInfo: this.AdditionalLogInfo() );
+						string retryDetails = CreateMethodCallInfo( EtsyEndPoint.GetRequestTokenUrl, mark, additionalInfo: this.AdditionalLogInfo() );
 						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 					} )
 				.ExecuteAsync(async () =>
 				{
 					OAuthCredentials credentials = null;
 
-					string absoluteUrl = Config.ApiBaseUrl + RequestTokenUrl;
+					string absoluteUrl = Config.ApiBaseUrl + EtsyEndPoint.GetRequestTokenUrl;
 
 					var oauthParameters = Authenticator.GetOAuthRequestParameters( absoluteUrl, "GET", null, requestParameters );
 					string url = Authenticator.GetUrl( absoluteUrl, oauthParameters );

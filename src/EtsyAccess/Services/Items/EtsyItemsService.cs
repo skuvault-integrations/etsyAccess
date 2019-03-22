@@ -15,10 +15,6 @@ namespace EtsyAccess.Services.Items
 {
 	public class EtsyItemsService : BaseService, IEtsyItemsService
 	{
-		private readonly string UpdateListingProductQuantityUrl = "/v2/listings/{0}/inventory";
-		private readonly string GetShopActiveListingsUrl = "/v2/shops/{0}/listings/active?limit=100";
-		private readonly string GetListingProductsInventoryUrl = "/v2/listings/{0}/inventory?write_missing_inventory=true";
-
 		public EtsyItemsService( EtsyConfig config ) : base( config )
 		{ }
 
@@ -98,7 +94,7 @@ namespace EtsyAccess.Services.Items
 				});
 			}
 
-			string url = String.Format( UpdateListingProductQuantityUrl, listing.Id );
+			string url = String.Format( EtsyEndPoint.UpdateListingInventoryUrl, listing.Id );
 
 			try
 			{
@@ -212,7 +208,7 @@ namespace EtsyAccess.Services.Items
 		public async Task< ListingInventory > GetListingInventoryBySku( Listing listing, string sku )
 		{
 			var mark = Mark.CreateNew();
-			string url = String.Format( GetListingProductsInventoryUrl, listing.Id );
+			string url = String.Format( EtsyEndPoint.GetListingInventoryUrl, listing.Id );
 
 			try
 			{
@@ -250,7 +246,7 @@ namespace EtsyAccess.Services.Items
 		public async Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus )
 		{
 			var mark = Mark.CreateNew();
-			string url = String.Format( GetShopActiveListingsUrl, Config.ShopId );
+			string url = String.Format( EtsyEndPoint.GetShopActiveListingsUrl, Config.ShopId );
 
 			try
 			{

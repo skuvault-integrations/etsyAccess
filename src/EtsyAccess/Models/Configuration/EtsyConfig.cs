@@ -63,4 +63,15 @@ namespace EtsyAccess.Models.Configuration
 			TokenSecret = tokenSecret;
 		}
 	}
+
+	public class EtsyEndPoint
+	{
+		public static readonly string GetReceiptsUrl = "/v2/shops/{0}/receipts?includes=Transactions,Listings,Country&limit=100";
+		public static readonly string GetShopInfoUrl = "/v2/shops/{0}";
+		public static readonly string GetShopActiveListingsUrl = "/v2/shops/{0}/listings/inactive?limit=100";
+		public static readonly string GetListingInventoryUrl = "/v2/listings/{0}/inventory?write_missing_inventory=true";
+		public static readonly string UpdateListingInventoryUrl = "/v2/listings/{0}/inventory";
+		public static readonly string GetRequestTokenUrl = "/v2/oauth/request_token";
+		public static readonly string GetAccessTokenUrl = "/v2/oauth/access_token";
+	}
 }

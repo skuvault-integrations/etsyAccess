@@ -14,8 +14,6 @@ namespace EtsyAccess.Services.Orders
 {
 	public class EtsyOrdersService : BaseService, IEtsyOrdersService
 	{
-		private readonly string ReceiptsUrl = "/v2/shops/{0}/receipts?includes=Transactions,Listings,Country&limit=100";
-
 		public EtsyOrdersService( EtsyConfig config ) : base( config )
 		{
 		}
@@ -36,7 +34,7 @@ namespace EtsyAccess.Services.Orders
 			long minLastModified = startDate.FromUtcTimeToEpoch();
 			long maxLastModified = endDate.FromUtcTimeToEpoch();
 
-			string url = String.Format( ReceiptsUrl + "&min_last_modified={1}&max_last_modified={2}", Config.ShopId,
+			string url = String.Format( EtsyEndPoint.GetReceiptsUrl + "&min_last_modified={1}&max_last_modified={2}", Config.ShopId,
 				minLastModified, maxLastModified );
 
 			try

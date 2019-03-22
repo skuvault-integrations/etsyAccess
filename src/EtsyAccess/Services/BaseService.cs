@@ -25,8 +25,6 @@ namespace EtsyAccess.Services
 		protected readonly OAuthenticator Authenticator;
 		private Func< string > _additionalLogInfo;
 
-		private const string ShopsInfoUrl = "/v2/shops/{0}";
-
 		/// <summary>
 		///	Extra logging information
 		/// </summary>
@@ -61,7 +59,7 @@ namespace EtsyAccess.Services
 
 			var mark = Mark.CreateNew();
 			IEnumerable< Shop > response = null;
-			string url = String.Format( ShopsInfoUrl, shopName );
+			string url = String.Format( EtsyEndPoint.GetShopInfoUrl, shopName );
 
 			try
 			{

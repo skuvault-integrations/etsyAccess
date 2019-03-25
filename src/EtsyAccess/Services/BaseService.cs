@@ -103,55 +103,34 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, List< T > result = null, Mark mark = null )
 		{
-			var responseContent = await Policy.Handle< EtsyNetworkException >()
-				.WaitAndRetryAsync( Config.RetryAttempts,
-					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
-					( entityRaw, timeSpan, retryCount, context ) =>
-					{
-						string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
-
-						_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
-					})
-				.ExecuteAsync( async () =>
+			var responseContent = await new Throttler( Config.RetryAttempts )
+				.Execute(async () =>
 				{
-					string entityRaw = null;
+					if ( !url.Contains( Config.ApiBaseUrl ) )
+						url = Config.ApiBaseUrl + url;
 
-					try
-					{
-						if ( !url.Contains( Config.ApiBaseUrl ) )
-							url = Config.ApiBaseUrl + url;
+					url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-						url = Authenticator.GetUriWithOAuthQueryParameters( url );
+					var httpResponse = await HttpClient.GetAsync( url, _cancellationTokenSource.Token ).ConfigureAwait( false );
+					string content = await httpResponse.Content.ReadAsStringAsync()
+						.ConfigureAwait( false );
 
-						var httpResponse = await HttpClient.GetAsync( url, _cancellationTokenSource.Token ).ConfigureAwait( false );
-						string content = await httpResponse.Content.ReadAsStringAsync()
-							.ConfigureAwait( false );
+					LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
 
-						LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
+					ThrowIfError( httpResponse, content );
 
-						ThrowIfError( httpResponse, content );
+					return content;
+				}, 
+				(timeSpan, retryCount) =>
+				{
+					string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+					EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-						entityRaw = content;
-					}
-					catch ( Exception exception )
-					{
-						EtsyException etsyException = null;
-						string exceptionDetails = this.CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-
-						if ( exception is EtsyServerException )
-							etsyException = new EtsyException(exceptionDetails, exception );
-						else
-							etsyException = new EtsyNetworkException(exceptionDetails, exception);
-
-						EtsyLogger.LogTraceException( etsyException );
-
-						throw etsyException;
-					}
-
-					return entityRaw;
-				});
-
+					_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+				},
+				() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
+				EtsyLogger.LogTraceException);
+			
 			var response = JsonConvert.DeserializeObject< EtsyResponse< T > >( responseContent );
 
 			if (result == null)
@@ -185,21 +164,8 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected async Task< T > GetEntityAsync< T >( string url, Mark mark = null )
 		{
-			var responseContent = await Policy.Handle< EtsyNetworkException >()
-				.WaitAndRetryAsync( Config.RetryAttempts,
-					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
-					( entityRaw, timeSpan, retryCount, context ) =>
-					{
-						string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
-
-						_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
-					})
-				.ExecuteAsync( async () =>
-				{
-					string entityRaw = null;
-
-					try
+			var responseContent = await new Throttler( Config.RetryAttempts )
+				.Execute(async () =>
 					{
 						if ( !url.Contains( Config.ApiBaseUrl ) )
 							url = Config.ApiBaseUrl + url;
@@ -213,25 +179,17 @@ namespace EtsyAccess.Services
 
 						ThrowIfError( httpResponse, content );
 
-						entityRaw = content;
-					}
-					catch ( Exception exception )
+						return content;
+					}, 
+					(timeSpan, retryCount) =>
 					{
-						EtsyException etsyException = null;
-						string exceptionDetails = this.CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-						
-						if ( exception is EtsyServerException )
-							etsyException = new EtsyException( exceptionDetails, exception );
-						else
-							etsyException = new EtsyNetworkException( exceptionDetails, exception );
+						string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-						EtsyLogger.LogTraceException( etsyException );
-
-						throw etsyException;
-					}
-
-					return entityRaw;
-				});
+						_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+					},
+					() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
+					EtsyLogger.LogTraceException);
 
 			var response = JsonConvert.DeserializeObject< EtsyResponseSingleEntity< T > >( responseContent );
 
@@ -247,19 +205,8 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected async Task PutAsync( string url, Dictionary<string, string> payload, Mark mark = null )
 		{
-			await Policy.Handle< EtsyNetworkException >()
-				.WaitAndRetryAsync( Config.RetryAttempts,
-					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
-					( entityRaw, timeSpan, retryCount, context ) =>
-					{
-						string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
-
-						_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
-					})
-				.ExecuteAsync( async () =>
-				{
-					try
+			await new Throttler( Config.RetryAttempts )
+				.Execute(async () =>
 					{
 						var content = new FormUrlEncodedContent( payload );
 
@@ -274,22 +221,18 @@ namespace EtsyAccess.Services
 						LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
 
 						ThrowIfError( response, responseStr );
-					}
-					catch ( Exception exception )
+
+						return responseStr;
+					}, 
+					(timeSpan, retryCount) =>
 					{
-						EtsyException etsyException = null;
-						string exceptionDetails = this.CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+						string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+						EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-						if ( exception is EtsyServerException )
-							etsyException = new EtsyException(exceptionDetails, exception );
-						else
-							etsyException = new EtsyNetworkException(exceptionDetails, exception);
-
-						EtsyLogger.LogTraceException( etsyException );
-
-						throw etsyException;
-					}
-				});
+						_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+					},
+					() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
+					EtsyLogger.LogTraceException);
 		}
 
 		/// <summary>

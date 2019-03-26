@@ -53,7 +53,7 @@ namespace EtsyAccess.Services.Authentication
 		///	Returns access token for making authorized API calls
 		/// </summary>
 		/// <returns></returns>
-		public async Task< OAuthCredentials > GetPermanentCredentials( string temporaryToken, string temporaryTokenSecret, string verifierCode )
+		public Task< OAuthCredentials > GetPermanentCredentials( string temporaryToken, string temporaryTokenSecret, string verifierCode )
 		{
 			Condition.Requires( temporaryToken ).IsNotNullOrEmpty();
 			Condition.Requires( temporaryTokenSecret ).IsNotNullOrEmpty();
@@ -67,7 +67,7 @@ namespace EtsyAccess.Services.Authentication
 				{ "oauth_verifier", verifierCode }
 			};
 
-			return await Policy.HandleResult< OAuthCredentials >( credentials => credentials == null )
+			return Policy.HandleResult< OAuthCredentials >( credentials => credentials == null )
 				.WaitAndRetryAsync( Config.RetryAttempts,
 					retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
 					( entityRaw, timeSpan, retryCount, context ) =>
@@ -117,7 +117,7 @@ namespace EtsyAccess.Services.Authentication
 		/// </summary>
 		/// <param name="scopes">Permissions</param>
 		/// <returns></returns>
-		public async Task< OAuthCredentials > GetTemporaryCredentials( string[] scopes )
+		public Task< OAuthCredentials > GetTemporaryCredentials( string[] scopes )
 		{
 			Condition.Requires( scopes ).IsNotEmpty();
 
@@ -129,7 +129,7 @@ namespace EtsyAccess.Services.Authentication
 				{ "oauth_callback", "oob" }
 			};
 
-			return await Policy.HandleResult<OAuthCredentials>( credentials => credentials == null )
+			return Policy.HandleResult<OAuthCredentials>( credentials => credentials == null )
 				.WaitAndRetryAsync( Config.RetryAttempts,
 					retryAttempt => TimeSpan.FromSeconds( Math.Pow(2, retryAttempt) ),
 					(entityRaw, timeSpan, retryCount, context) =>
@@ -193,20 +193,20 @@ namespace EtsyAccess.Services.Authentication
 		/// <returns></returns>
 		private Dictionary< string, string > ParseQueryParams( string queryParams )
 		{
-			var result = new Dictionary<string, string>();
+			var result = new Dictionary< string, string >();
 
-			if (!string.IsNullOrEmpty(queryParams))
+			if ( !string.IsNullOrEmpty( queryParams ) )
 			{
-				string[] keyValuePairs = queryParams.Split('&');
+				string[] keyValuePairs = queryParams.Split( '&' );
 
-				foreach (string keyValuePair in keyValuePairs)
+				foreach ( string keyValuePair in keyValuePairs )
 				{
-					string[] keyValue = keyValuePair.Split('=');
+					string[] keyValue = keyValuePair.Split( '=' );
 
-					if (keyValue.Length == 2)
+					if ( keyValue.Length == 2 )
 					{
-						if (!result.TryGetValue(keyValue[0], out var tmp))
-							result.Add(keyValue[0], keyValue[1]);
+						if ( !result.TryGetValue( keyValue[0], out var tmp ) )
+							result.Add( keyValue[0], keyValue[1] );
 					}
 				}
 			}

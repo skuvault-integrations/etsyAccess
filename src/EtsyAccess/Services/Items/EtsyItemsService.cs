@@ -188,12 +188,10 @@ namespace EtsyAccess.Services.Items
 			// get all listings that have products with specified sku
 			var listings = await GetListingsBySku( sku ).ConfigureAwait( false );
 			var listing = listings.FirstOrDefault();
-
+			
+			// get listing's product inventory
 			if (listing != null)
-			{
-				// get listing's product
-				listingInventory = await GetListingInventoryBySku( listing, sku ).ConfigureAwait( false );
-			}
+				listingInventory = await GetListingInventoryBySku( listing, sku );
 
 			return listingInventory;
 		}
@@ -233,9 +231,9 @@ namespace EtsyAccess.Services.Items
 		/// </summary>
 		/// <param name="sku">Product sku</param>
 		/// <returns></returns>
-		public async Task < IEnumerable< Listing > > GetListingsBySku( string sku )
+		public Task < IEnumerable< Listing > > GetListingsBySku( string sku )
 		{
-			return await GetListingsBySkus( new string[] { sku } ).ConfigureAwait( false );
+			return GetListingsBySkus( new string[] { sku } );
 		}
 
 		/// <summary>

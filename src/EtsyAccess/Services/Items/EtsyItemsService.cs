@@ -88,7 +88,7 @@ namespace EtsyAccess.Services.Items
 						{
 							Id = productOffering.Id,
 							Quantity = productQuantity,
-							Price = (float)(productOffering.Price.Amount * 1.0 / productOffering.Price.Divisor)
+							Price = (decimal)productOffering.Price
 						}
 					}
 				});

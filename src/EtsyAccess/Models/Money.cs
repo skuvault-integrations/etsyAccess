@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using CuttingEdge.Conditions;
 using Newtonsoft.Json;
 
 namespace EtsyAccess.Models
@@ -51,5 +52,19 @@ namespace EtsyAccess.Models
 		/// </summary>
 		[JsonProperty("before_conversion")]
 		public Money BeforeConversion { get; set; }
+
+		public Money( int amount, int divisor )
+		{
+			Condition.Requires( amount ).IsGreaterThan( 0 );
+			Condition.Requires( divisor ).IsGreaterOrEqual( 1 );
+
+			Amount = amount;
+			Divisor = divisor;
+		}
+
+		public static explicit operator decimal( Money money )
+		{
+			return (decimal)( money.Amount * 1.0 / money.Divisor );
+		}
 	}
 }

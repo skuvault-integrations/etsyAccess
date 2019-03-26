@@ -15,7 +15,7 @@ namespace EtsyAccessTests
 		public void UpdateSkuQuantity()
 		{
 			string sku = "testSku1";
-			int quantity = 5;
+			int quantity = 10;
 
 			this.EtsyItemsService.UpdateSkuQuantity( sku, quantity );
 

@@ -24,6 +24,6 @@ namespace EtsyAccess.Models.Requests
 		[JsonProperty("quantity")]
 		public int Quantity { get; set; }
 		[JsonProperty("price")]
-		public float Price { get; set; }
+		public decimal Price { get; set; }
 	}
 }

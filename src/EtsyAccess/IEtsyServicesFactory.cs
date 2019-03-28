@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using EtsyAccess.Services.Authentication;
+using EtsyAccess.Services.Common;
+using Netco.ThrottlerServices;
 
 namespace EtsyAccess
 {
@@ -12,5 +14,6 @@ namespace EtsyAccess
 		IEtsyAuthenticationService CreateAuthenticationService();
 		IEtsyOrdersService CreateOrdersService();
 		IEtsyItemsService CreateItemsService();
+		IEtsyAdminService CreateAdminService();
 	}
 }

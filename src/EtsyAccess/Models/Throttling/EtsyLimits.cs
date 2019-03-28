@@ -4,7 +4,7 @@ using System.Text;
 
 namespace EtsyAccess.Models.Throttling
 {
-	internal class EtsyLimits
+	public class EtsyLimits
 	{
 		public int TotalAvailableRequests { get; private set; }
 		public int CallsRemaining{ get; private set; }

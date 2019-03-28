@@ -9,13 +9,14 @@ using EtsyAccess.Shared;
 using EtsyAccess.Models;
 using EtsyAccess.Models.Configuration;
 using EtsyAccess.Models.Requests;
+using EtsyAccess.Models.Throttling;
 using Newtonsoft.Json;
 
 namespace EtsyAccess.Services.Items
 {
 	public class EtsyItemsService : BaseService, IEtsyItemsService
 	{
-		public EtsyItemsService( EtsyConfig config ) : base( config )
+		public EtsyItemsService( EtsyConfig config, Throttler throttler ) : base( config, throttler )
 		{ }
 
 		public void UpdateSkuQuantity(string sku, int quantity)

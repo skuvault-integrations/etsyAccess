@@ -6,9 +6,11 @@ using EtsyAccess;
 using EtsyAccess.Models.Configuration;
 using EtsyAccess.Services;
 using EtsyAccess.Services.Authentication;
+using EtsyAccess.Services.Common;
 using EtsyAccess.Services.Items;
 using EtsyAccess.Services.Orders;
 using FluentAssertions;
+using Netco.ThrottlerServices;
 using NUnit.Framework;
 
 namespace EtsyAccessTests
@@ -28,7 +30,7 @@ namespace EtsyAccessTests
 		protected IEtsyOrdersService EtsyOrdersService { get; set; }
 		protected IEtsyItemsService EtsyItemsService { get; set; }
 		protected IEtsyAuthenticationService EtsyAuthenticationService { get; set; }
-		protected BaseService BaseService { get; set; }
+		protected IEtsyAdminService EtsyAdminService { get; set; }
 		protected string ShopName;
 		protected EtsyConfig Config;
 
@@ -41,12 +43,12 @@ namespace EtsyAccessTests
 			var config = new EtsyConfig( credentials.ApplicationKey, credentials.SharedSecret, credentials.ShopId,
 				credentials.Token, credentials.TokenSecret );
 
-			var factory = new EtsyServicesFactory( config );
+			var factory = new EtsyServicesFactory( config);
 
 			EtsyOrdersService = factory.CreateOrdersService();
 			EtsyItemsService = factory.CreateItemsService();
 			EtsyAuthenticationService = factory.CreateAuthenticationService();
-			BaseService = new BaseService( config );
+			EtsyAdminService = factory.CreateAdminService();
 		}
 
 		private TestCredentials LoadCredentials()
@@ -65,14 +67,6 @@ namespace EtsyAccessTests
 					TokenSecret = reader.ReadLine()
 				};
 			}
-		}
-		
-		[ Test ]
-		public void GetShopInfoByName()
-		{
-			var shop = BaseService.GetShopInfo( ShopName ).GetAwaiter().GetResult();
-
-			shop.Should().NotBeNull();
 		}
 	}
 }

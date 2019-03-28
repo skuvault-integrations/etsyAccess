@@ -14,6 +14,7 @@ using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Shared;
 using EtsyAccess.Models.Configuration;
+using EtsyAccess.Models.Throttling;
 using NLog;
 using NLog.Fluent;
 using NLog.LayoutRenderers.Wrappers;
@@ -45,7 +46,7 @@ namespace EtsyAccess.Services.Authentication
 	/// </summary>
 	public class EtsyAuthenticationService : BaseService, IEtsyAuthenticationService
 	{
-		public EtsyAuthenticationService( EtsyConfig config ) : base( config )
+		public EtsyAuthenticationService( EtsyConfig config, Throttler throttler ) : base( config, throttler )
 		{
 		}
 

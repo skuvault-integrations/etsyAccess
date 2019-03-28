@@ -9,12 +9,13 @@ using EtsyAccess.Exceptions;
 using EtsyAccess.Shared;
 using EtsyAccess.Models;
 using EtsyAccess.Models.Configuration;
+using EtsyAccess.Models.Throttling;
 
 namespace EtsyAccess.Services.Orders
 {
 	public class EtsyOrdersService : BaseService, IEtsyOrdersService
 	{
-		public EtsyOrdersService( EtsyConfig config ) : base( config )
+		public EtsyOrdersService( EtsyConfig config, Throttler throttler ) : base( config, throttler )
 		{
 		}
 

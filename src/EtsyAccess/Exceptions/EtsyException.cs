@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using EtsyAccess.Models.Throttling;
 
 namespace EtsyAccess.Exceptions
 {
@@ -21,7 +22,7 @@ namespace EtsyAccess.Exceptions
 	}
 
 	/// <summary>
-	///	Etsy server exception
+	///	Etsy server exception (they can't be reattempted)
 	/// </summary>
 	public class EtsyServerException : EtsyException
 	{
@@ -38,8 +39,24 @@ namespace EtsyAccess.Exceptions
 		public EtsyServerException( string message, int code ) : this ( message, code, null ) { }
 	}
 
+	/// <summary>
+	///	OAuth request signature is invalid. The remedy is resend request again (normal behavior from Etsy backend)
+	/// </summary>
 	public class EtsyInvalidSignatureException : EtsyException
 	{
 		public EtsyInvalidSignatureException( string message ) : base( message, null ) { }
+	}
+
+	/// <summary>
+	///	Etsy's API usage exceeded, normally Etsy allows 10 requests per second
+	/// </summary>
+	public class EtsyApiLimitsExceeded : EtsyServerException
+	{
+		public EtsyLimits Limits { get; private set; }
+
+		public EtsyApiLimitsExceeded( EtsyLimits limits, string message ) : base(message, 403 )
+		{
+			Limits = limits;
+		}
 	}
 }

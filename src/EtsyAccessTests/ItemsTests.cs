@@ -15,7 +15,7 @@ namespace EtsyAccessTests
 		public void UpdateSkuQuantity()
 		{
 			string sku = "testSku1";
-			int quantity = 10;
+			int quantity = 12;
 
 			this.EtsyItemsService.UpdateSkuQuantity( sku, quantity );
 
@@ -31,9 +31,9 @@ namespace EtsyAccessTests
 		public void UpdateSkusQuantities()
 		{
 			string sku = "testSku1";
-			int skuQuantity = 10;
+			int skuQuantity = 6;
 			string sku2 = "B07DBJSDPN-20BR";
-			int sku2Quantity = 8;
+			int sku2Quantity = 98;
 
 			var quantities = new Dictionary<string, int>
 			{

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
@@ -24,8 +25,9 @@ namespace EtsyAccess.Services.Orders
 		/// </summary>
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
+		/// <param name="token">Cancellation token for cancelling call to endpoint</param>
 		/// <returns></returns>
-		public async Task< IEnumerable< Receipt > > GetOrdersAsync( DateTime startDate, DateTime endDate )
+		public async Task< IEnumerable< Receipt > > GetOrdersAsync( DateTime startDate, DateTime endDate, CancellationToken token )
 		{
 			Condition.Requires( startDate ).IsLessThan( endDate );
 
@@ -42,7 +44,7 @@ namespace EtsyAccess.Services.Orders
 			{
 				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-				response = await base.GetEntitiesAsync< Receipt >( url, mark: mark ).ConfigureAwait( false );
+				response = await base.GetEntitiesAsync< Receipt >( url, token, mark: mark).ConfigureAwait( false );
 
 				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: response.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 			}
@@ -61,10 +63,11 @@ namespace EtsyAccess.Services.Orders
 		/// </summary>
 		/// <param name="startDate"></param>
 		/// <param name="endDate"></param>
+		/// <param name="token">Cancellation token for cancelling call to endpoint</param>
 		/// <returns></returns>
-		IEnumerable< Receipt > IEtsyOrdersService.GetOrders( DateTime startDate, DateTime endDate)
+		IEnumerable< Receipt > IEtsyOrdersService.GetOrders( DateTime startDate, DateTime endDate, CancellationToken token )
 		{
-			return GetOrdersAsync( startDate, endDate ).GetAwaiter().GetResult();
+			return GetOrdersAsync( startDate, endDate, token ).GetAwaiter().GetResult();
 		}
 	}
 }

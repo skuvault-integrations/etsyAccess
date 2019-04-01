@@ -42,9 +42,9 @@ namespace EtsyAccess.Exceptions
 	/// <summary>
 	///	OAuth request signature is invalid. The remedy is resend request again (normal behavior from Etsy backend)
 	/// </summary>
-	public class EtsyInvalidSignatureException : EtsyException
+	public class EtsyInvalidSignatureException : EtsyServerException
 	{
-		public EtsyInvalidSignatureException( string message ) : base( message, null ) { }
+		public EtsyInvalidSignatureException( string message ) : base( message, 403 ) { }
 	}
 
 	/// <summary>

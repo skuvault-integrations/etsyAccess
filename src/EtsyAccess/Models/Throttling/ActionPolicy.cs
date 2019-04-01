@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -50,15 +51,16 @@ namespace EtsyAccess.Models.Throttling
 					{
 						EtsyException etsyException = null;
 
-						string exceptionDetails = string.Empty;
+						var exceptionDetails = string.Empty;
 
 						if ( extraLogInfo != null )
 							exceptionDetails = extraLogInfo();
 
-						if ( exception is EtsyServerException )
-							etsyException = new EtsyException( exceptionDetails, exception );
-						else
+						if ( exception is HttpRequestException 
+							|| exception is EtsyInvalidSignatureException )
 							etsyException = new EtsyNetworkException( exceptionDetails, exception );
+						else
+							etsyException = new EtsyException( exceptionDetails, exception );
 
 						throw etsyException;
 					}

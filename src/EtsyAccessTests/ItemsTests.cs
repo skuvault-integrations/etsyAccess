@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
@@ -17,10 +18,10 @@ namespace EtsyAccessTests
 			string sku = "testSku1";
 			int quantity = 12;
 
-			this.EtsyItemsService.UpdateSkuQuantity( sku, quantity );
+			this.EtsyItemsService.UpdateSkuQuantity( sku, quantity, CancellationToken.None );
 
 			// assert
-			var inventory = this.EtsyItemsService.GetListingProductBySku( sku ).GetAwaiter().GetResult();
+			var inventory = this.EtsyItemsService.GetListingProductBySku( sku, CancellationToken.None ).GetAwaiter().GetResult();
 
 			inventory.Should().NotBeNull();
 			inventory.Offerings.Should().NotBeNullOrEmpty();
@@ -41,16 +42,16 @@ namespace EtsyAccessTests
 				{ sku2, sku2Quantity }
 			};
 
-			this.EtsyItemsService.UpdateSkusQuantityAsync(quantities).GetAwaiter().GetResult();
+			this.EtsyItemsService.UpdateSkusQuantityAsync(quantities, CancellationToken.None).GetAwaiter().GetResult();
 
 			// assert
-			var skuInventory = this.EtsyItemsService.GetListingProductBySku( sku ).GetAwaiter().GetResult();
+			var skuInventory = this.EtsyItemsService.GetListingProductBySku( sku, CancellationToken.None ).GetAwaiter().GetResult();
 
 			skuInventory.Should().NotBeNull();
 			skuInventory.Offerings.Should().NotBeNullOrEmpty();
 			skuInventory.Offerings.First().Quantity.Should().Be( skuQuantity );
 
-			var sku2Inventory = this.EtsyItemsService.GetListingProductBySku( sku2 ).GetAwaiter().GetResult();
+			var sku2Inventory = this.EtsyItemsService.GetListingProductBySku( sku2, CancellationToken.None ).GetAwaiter().GetResult();
 
 			sku2Inventory.Should().NotBeNull();
 			sku2Inventory.Offerings.Should().NotBeNullOrEmpty();

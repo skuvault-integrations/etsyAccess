@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using EtsyAccess.Services;
 using FluentAssertions;
@@ -14,7 +15,7 @@ namespace EtsyAccessTests
 		[ Test ]
 		public void GetShopInfoByName()
 		{
-			var shop = EtsyAdminService.GetShopInfo( ShopName ).GetAwaiter().GetResult();
+			var shop = EtsyAdminService.GetShopInfo( ShopName, CancellationToken.None ).GetAwaiter().GetResult();
 
 			shop.Should().NotBeNull();
 		}

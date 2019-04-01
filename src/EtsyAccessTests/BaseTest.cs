@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using System.Security.Policy;
+using System.Threading;
 using EtsyAccess;
 using EtsyAccess.Models.Configuration;
 using EtsyAccess.Models.Throttling;
@@ -33,6 +34,7 @@ namespace EtsyAccessTests
 		protected IEtsyAdminService EtsyAdminService { get; set; }
 		protected string ShopName;
 		protected EtsyConfig Config;
+		protected CancellationTokenSource CancellationTokenSource;
 
 		[ SetUp ]
 		public void Init()
@@ -49,7 +51,8 @@ namespace EtsyAccessTests
 			EtsyOrdersService = factory.CreateOrdersService( config, throttler );
 			EtsyItemsService = factory.CreateItemsService( config, throttler );
 			EtsyAuthenticationService = factory.CreateAuthenticationService( config, throttler );
-			EtsyAdminService = factory.CreateAdminService( config, throttler);
+			EtsyAdminService = factory.CreateAdminService( config, throttler );
+			CancellationTokenSource = new CancellationTokenSource();
 		}
 
 		private TestCredentials LoadCredentials()

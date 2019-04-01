@@ -21,7 +21,7 @@ namespace EtsyAccessTests
 			ThreadPool.SetMinThreads(100, 4);
 			System.Net.ServicePointManager.DefaultConnectionLimit = 100;
 			List<Shop> shops = new List<Shop>();
-			int requestsAmount = 30;
+			int requestsAmount = 20;
 
 			List<Task> tasks = new List<Task>();
 
@@ -34,7 +34,7 @@ namespace EtsyAccessTests
 
 					Trace.WriteLine($"[{ DateTime.Now }] Started making call #{ j + 1 } to get shop info");
 					
-					var result = await this.EtsyAdminService.GetShopInfo(this.ShopName);
+					var result = await this.EtsyAdminService.GetShopInfo( this.ShopName, CancellationTokenSource.Token );
 					
 					Trace.WriteLine($"[{ DateTime.Now }] Completed making call #{ j + 1 } to get shop info. Took { stopwatch.ElapsedMilliseconds } ms to complete");
 					shops.Add(result);
@@ -44,7 +44,10 @@ namespace EtsyAccessTests
 				tasks.Add(task);
 			}
 
+			//CancellationTokenSource.CancelAfter( 40 * 1000 );
+
 			Task.WaitAll(tasks.ToArray());
+
 			shops.Count.Should().Be( requestsAmount );
 		}
 	}

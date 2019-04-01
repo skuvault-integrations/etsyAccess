@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
@@ -21,8 +22,9 @@ namespace EtsyAccess.Services.Common
 		///	Returns shop info
 		/// </summary>
 		/// <param name="shopName">Etsy's shop name</param>
+		/// <param name="token">Token for cancelling calls to endpoint</param>
 		/// <returns></returns>
-		public async Task< Shop > GetShopInfo( string shopName )
+		public async Task< Shop > GetShopInfo( string shopName, CancellationToken token )
 		{
 			Condition.Requires( shopName ).IsNotNullOrEmpty();
 
@@ -34,7 +36,7 @@ namespace EtsyAccess.Services.Common
 			{
 				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-				response = await GetEntitiesAsync< Shop >( url ).ConfigureAwait( false );
+				response = await GetEntitiesAsync< Shop >( url, token ).ConfigureAwait( false );
 
 				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: response.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 			}

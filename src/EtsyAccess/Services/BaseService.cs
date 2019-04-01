@@ -26,7 +26,7 @@ namespace EtsyAccess.Services
 		protected readonly HttpClient HttpClient;
 		protected readonly OAuthenticator Authenticator;
 		private Func< string > _additionalLogInfo;
-		private CancellationTokenSource _cancellationTokenSource;
+		private CancellationTokenSource _requestTimeoutCancellationTokenSource;
 		public readonly Throttler Throttler;
 
 		/// <summary>
@@ -48,22 +48,12 @@ namespace EtsyAccess.Services
 
 			HttpClient = new HttpClient()
 			{
-				BaseAddress = new Uri( Config.ApiBaseUrl )
+				BaseAddress = new Uri( Config.ApiBaseUrl ) 
 			};
 
 			Authenticator = new OAuthenticator( Config.ApplicationKey, Config.SharedSecret, Config.Token, Config.TokenSecret );
 
-			SetCancellationToken( Config.RequestTimeoutMs );
-		}
-
-		/// <summary>
-		///	Set timeout for requests
-		/// </summary>
-		/// <param name="timeout"></param>
-		private void SetCancellationToken( int timeout )
-		{
-			_cancellationTokenSource = new CancellationTokenSource();
-			_cancellationTokenSource.CancelAfter( timeout );
+			_requestTimeoutCancellationTokenSource = new CancellationTokenSource();
 		}
 
 		/// <summary>
@@ -72,9 +62,10 @@ namespace EtsyAccess.Services
 		/// <typeparam name="T">Entities that should be received from service endpoint</typeparam>
 		/// <param name="url">Url to endpoint</param>
 		/// <param name="result"></param>
+		/// <param name="cancellationToken">Cancellation token for cancelling call to endpoint</param>
 		/// <param name="mark">Method tracing mark</param>
 		/// <returns></returns>
-		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, List< T > result = null, Mark mark = null )
+		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, CancellationToken cancellationToken, List< T > result = null, Mark mark = null )
 		{
 			var responseContent = await Throttler.ExecuteAsync(() =>
 			{
@@ -86,7 +77,10 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-							var httpResponse = await HttpClient.GetAsync( url, _cancellationTokenSource.Token ).ConfigureAwait( false );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs );
+							var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource( cancellationToken, _requestTimeoutCancellationTokenSource.Token );
+
+							var httpResponse = await HttpClient.GetAsync( url, linkedCancellationTokenSource.Token ).ConfigureAwait( false );
 							string content = await httpResponse.Content.ReadAsStringAsync()
 								.ConfigureAwait( false );
 
@@ -101,7 +95,7 @@ namespace EtsyAccess.Services
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-							_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
@@ -125,7 +119,7 @@ namespace EtsyAccess.Services
 				url = url.Replace( String.Format("&offset={0}", currentOffset), "" );
 				url += String.Format( "&offset={0}", nextOffset );
 
-				await GetEntitiesAsync( url, result ).ConfigureAwait( false );
+				await GetEntitiesAsync( url, cancellationToken, result ).ConfigureAwait( false );
 			}
 
 			return result;
@@ -136,9 +130,10 @@ namespace EtsyAccess.Services
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <param name="url"></param>
-		///  <param name="mark"></param>
+		/// <param name="cancellationToken"></param>
+		/// <param name="mark"></param>
 		/// <returns></returns>
-		protected async Task< T > GetEntityAsync< T >( string url, Mark mark = null )
+		protected async Task< T > GetEntityAsync< T >( string url, CancellationToken cancellationToken, Mark mark = null )
 		{
 			var responseContent = await Throttler.ExecuteAsync(() =>
 			{
@@ -150,7 +145,10 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-							var httpResponse = await HttpClient.GetAsync( url, _cancellationTokenSource.Token ).ConfigureAwait( false );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs );
+							var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource( cancellationToken, _requestTimeoutCancellationTokenSource.Token );
+
+							var httpResponse = await HttpClient.GetAsync( url, linkedCancellationTokenSource.Token ).ConfigureAwait( false );
 							var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
 							LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
@@ -164,7 +162,7 @@ namespace EtsyAccess.Services
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-							_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
@@ -180,9 +178,10 @@ namespace EtsyAccess.Services
 		/// </summary>
 		/// <param name="payload"></param>
 		/// <param name="url"></param>
+		/// <param name="token"></param>
 		/// <param name="mark"></param>
 		/// <returns></returns>
-		protected Task PutAsync(string url, Dictionary<string, string> payload, Mark mark = null)
+		protected Task PutAsync(string url, Dictionary<string, string> payload, CancellationToken token, Mark mark = null)
 		{
 			return Throttler.ExecuteAsync(() =>
 			{
@@ -196,7 +195,10 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url, "PUT", payload );
 
-							var response = await HttpClient.PutAsync( url, content, _cancellationTokenSource.Token ).ConfigureAwait( false );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs );
+							var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource( token, _requestTimeoutCancellationTokenSource.Token );
+
+							var response = await HttpClient.PutAsync( url, content, linkedCancellationTokenSource.Token ).ConfigureAwait( false );
 							var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 						
 							LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
@@ -210,7 +212,7 @@ namespace EtsyAccess.Services
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-							_cancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);

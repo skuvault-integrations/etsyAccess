@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
@@ -19,9 +20,9 @@ namespace EtsyAccess.Services.Items
 		public EtsyItemsService( EtsyConfig config, Throttler throttler ) : base( config, throttler )
 		{ }
 
-		public void UpdateSkuQuantity(string sku, int quantity)
+		public void UpdateSkuQuantity( string sku, int quantity, CancellationToken token )
 		{
-			UpdateSkuQuantityAsync( sku, quantity ).GetAwaiter().GetResult();
+			UpdateSkuQuantityAsync( sku, quantity, token ).GetAwaiter().GetResult();
 		}
 
 		/// <summary>
@@ -29,8 +30,9 @@ namespace EtsyAccess.Services.Items
 		/// </summary>
 		/// <param name="sku"></param>
 		/// <param name="quantity"></param>
+		/// <param name="token"></param>
 		/// <returns></returns>
-		public async Task UpdateSkuQuantityAsync( string sku, int quantity )
+		public async Task UpdateSkuQuantityAsync( string sku, int quantity, CancellationToken token )
 		{
 			Condition.Requires( sku ).IsNotNullOrEmpty();
 			Condition.Requires( quantity ).IsGreaterOrEqual( 0 );
@@ -38,16 +40,16 @@ namespace EtsyAccess.Services.Items
 			var mark = Mark.CreateNew();
 
 			// get all listings that have products with specified sku
-			var listings = await GetListingsBySku( sku ).ConfigureAwait( false );
+			var listings = await GetListingsBySku( sku, token ).ConfigureAwait( false );
 			var listing = listings.FirstOrDefault();
 
 			if ( listing == null)
 				return;
 
 			// get listing inventory
-			var listingInventory = await GetListingInventoryBySku( listing, sku ).ConfigureAwait( false );
+			var listingInventory = await GetListingInventoryBySku( listing, sku, token ).ConfigureAwait( false );
 						
-			await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity ).ConfigureAwait( false );
+			await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity, token ).ConfigureAwait( false );
 		}
 
 		/// <summary>
@@ -58,11 +60,11 @@ namespace EtsyAccess.Services.Items
 		/// <param name="sku"></param>
 		/// <param name="quantity"></param>
 		/// <returns></returns>
-		private async Task UpdateSkuQuantityAsync( Listing listing, ListingInventory inventory, string sku, int quantity)
+		private async Task UpdateSkuQuantityAsync( Listing listing, ListingInventory inventory, string sku, int quantity, CancellationToken token )
 		{
 			var mark = Mark.CreateNew();
 
-			List< UpdateInventoryRequest > updateInventoryRequest = new List< UpdateInventoryRequest >();
+			var updateInventoryRequest = new List< UpdateInventoryRequest >();
 
 			// we should also add all product variations to request
 			foreach ( var product in inventory.Products )
@@ -95,7 +97,7 @@ namespace EtsyAccess.Services.Items
 				});
 			}
 
-			string url = String.Format( EtsyEndPoint.UpdateListingInventoryUrl, listing.Id );
+			var url = String.Format( EtsyEndPoint.UpdateListingInventoryUrl, listing.Id );
 
 			try
 			{
@@ -115,7 +117,7 @@ namespace EtsyAccess.Services.Items
 				if (inventory.SkuOnProperty.Length != 0)
 					payload.Add("sku_on_property", string.Join( ",", inventory.SkuOnProperty ) );
 
-				await base.PutAsync( url, payload, mark ).ConfigureAwait( false );
+				await base.PutAsync( url, payload, token, mark ).ConfigureAwait( false );
 
 				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 			}
@@ -131,27 +133,28 @@ namespace EtsyAccess.Services.Items
 		///	Updates skus quantities
 		/// </summary>
 		/// <param name="skusQuantities"></param>
+		/// <param name="token"></param>
 		/// <returns></returns>
-		public async Task UpdateSkusQuantityAsync( Dictionary<string, int> skusQuantities )
+		public async Task UpdateSkusQuantityAsync( Dictionary<string, int> skusQuantities, CancellationToken token )
 		{
 			Condition.Requires( skusQuantities ).IsNotEmpty();
 
-			var listings = await GetListingsBySkus( skusQuantities.Keys ).ConfigureAwait( false );
+			var listings = await GetListingsBySkus( skusQuantities.Keys, token ).ConfigureAwait( false );
 
 			foreach ( var skuQuantity in skusQuantities )
 			{
-				string sku = skuQuantity.Key;
-				int quantity = skuQuantity.Value;
+				var sku = skuQuantity.Key;
+				var quantity = skuQuantity.Value;
 
 				var listing = listings.Where( item => item.Sku.Select( s => s.ToLower() ).Contains( sku.ToLower() ) ).FirstOrDefault();
 
 				if ( listing == null )
 					continue;
 
-				var listingInventory = await GetListingInventoryBySku( listing, sku ).ConfigureAwait( false );
+				var listingInventory = await GetListingInventoryBySku( listing, sku, token ).ConfigureAwait( false );
 
 				if ( listingInventory != null )
-					await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity );
+					await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity, token );
 			}
 		}
 
@@ -159,14 +162,15 @@ namespace EtsyAccess.Services.Items
 		///	Returns listings' product by sku
 		/// </summary>
 		/// <param name="sku"></param>
+		/// <param name="token"></param>
 		/// <returns></returns>
-		public async Task< ListingProduct > GetListingProductBySku( string sku )
+		public async Task< ListingProduct > GetListingProductBySku( string sku, CancellationToken token )
 		{
 			Condition.Requires( sku ).IsNotNullOrEmpty();
 
 			ListingProduct listingProduct = null;
 
-			var inventory = await GetListingInventoryBySku( sku ).ConfigureAwait( false );
+			var inventory = await GetListingInventoryBySku( sku, token ).ConfigureAwait( false );
 
 			if ( inventory != null )
 				listingProduct = inventory.Products
@@ -179,20 +183,21 @@ namespace EtsyAccess.Services.Items
 		///	Returns sku inventory
 		/// </summary>
 		/// <param name="sku"></param>
+		/// <param name="token"></param>
 		/// <returns></returns>
-		public async Task< ListingInventory > GetListingInventoryBySku( string sku )
+		public async Task< ListingInventory > GetListingInventoryBySku( string sku, CancellationToken token )
 		{
 			Condition.Requires( sku ).IsNotNullOrEmpty();
 
 			ListingInventory listingInventory = null;
 
 			// get all listings that have products with specified sku
-			var listings = await GetListingsBySku( sku ).ConfigureAwait( false );
+			var listings = await GetListingsBySku( sku, token ).ConfigureAwait( false );
 			var listing = listings.FirstOrDefault();
 			
 			// get listing's product inventory
 			if (listing != null)
-				listingInventory = await GetListingInventoryBySku( listing, sku );
+				listingInventory = await GetListingInventoryBySku( listing, sku, token );
 
 			return listingInventory;
 		}
@@ -203,8 +208,9 @@ namespace EtsyAccess.Services.Items
 		/// </summary>
 		/// <param name="listing"></param>
 		/// <param name="sku"></param>
+		/// <param name="token"></param>
 		/// <returns></returns>
-		public async Task< ListingInventory > GetListingInventoryBySku( Listing listing, string sku )
+		public async Task< ListingInventory > GetListingInventoryBySku( Listing listing, string sku, CancellationToken token )
 		{
 			var mark = Mark.CreateNew();
 			string url = String.Format( EtsyEndPoint.GetListingInventoryUrl, listing.Id );
@@ -213,7 +219,7 @@ namespace EtsyAccess.Services.Items
 			{
 				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-				var inventory = await GetEntityAsync< ListingInventory >( url, mark ).ConfigureAwait( false );
+				var inventory = await GetEntityAsync< ListingInventory >( url, token, mark ).ConfigureAwait( false );
 
 				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: inventory.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 
@@ -231,27 +237,29 @@ namespace EtsyAccess.Services.Items
 		///	Returns shop's active listings
 		/// </summary>
 		/// <param name="sku">Product sku</param>
+		/// <param name="token">Product sku</param>
 		/// <returns></returns>
-		public Task < IEnumerable< Listing > > GetListingsBySku( string sku )
+		public Task < IEnumerable< Listing > > GetListingsBySku( string sku, CancellationToken token )
 		{
-			return GetListingsBySkus( new string[] { sku } );
+			return GetListingsBySkus( new string[] { sku }, token );
 		}
 
 		/// <summary>
 		///	Returns listings with specified skus
 		/// </summary>
 		/// <param name="skus"></param>
+		/// <param name="token"></param>
 		/// <returns></returns>
-		public async Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus )
+		public async Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus, CancellationToken token )
 		{
 			var mark = Mark.CreateNew();
-			string url = String.Format( EtsyEndPoint.GetShopActiveListingsUrl, Config.ShopId );
+			var url = String.Format( EtsyEndPoint.GetShopActiveListingsUrl, Config.ShopId );
 
 			try
 			{
 				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-				var listings = await GetEntitiesAsync< Listing >( url, mark: mark ).ConfigureAwait( false );
+				var listings = await GetEntitiesAsync< Listing >( url, token, mark: mark ).ConfigureAwait( false );
 
 				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: listings.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 

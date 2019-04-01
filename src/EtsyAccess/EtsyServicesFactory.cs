@@ -11,51 +11,52 @@ namespace EtsyAccess
 {
 	public class EtsyServicesFactory : IEtsyServicesFactory
 	{
-		private readonly EtsyConfig _config;
-		private readonly Throttler _throttler;
-
-		public EtsyServicesFactory( EtsyConfig config )
-		{
-			Condition.Requires( config ).IsNotNull();
-
-			_config = config;
-			_throttler = new Throttler( _config.ThrottlingMaxRequestsPerRestoreInterval, _config.ThrottlingRestorePeriodInSeconds, _config.ThrottlingMaxRetryAttempts );
-		}
-
 		/// <summary>
 		///	Returns service to work with Etsy's listings and products
 		/// </summary>
 		/// <returns></returns>
-		public IEtsyItemsService CreateItemsService()
+		public IEtsyItemsService CreateItemsService( EtsyConfig config, Throttler throttler )
 		{
-			return new EtsyItemsService( _config, _throttler );
+			Condition.Requires( config ).IsNotNull();
+			Condition.Requires( throttler ).IsNotNull();
+
+			return new EtsyItemsService( config, throttler );
 		}
 
 		/// <summary>
 		///	Returns service to work with Etsy's general functionality
 		/// </summary>
 		/// <returns></returns>
-		public IEtsyAdminService CreateAdminService()
+		public IEtsyAdminService CreateAdminService( EtsyConfig config, Throttler throttler )
 		{
-			return new EtsyAdminService( _config, _throttler );
+			Condition.Requires( config ).IsNotNull();
+			Condition.Requires( throttler ).IsNotNull();
+
+			return new EtsyAdminService( config, throttler );
 		}
 
 		/// <summary>
 		///	Returns service to work with credentials
 		/// </summary>
 		/// <returns></returns>
-		public IEtsyAuthenticationService CreateAuthenticationService()
+		public IEtsyAuthenticationService CreateAuthenticationService( EtsyConfig config, Throttler throttler )
 		{
-			return new EtsyAuthenticationService( _config, _throttler );
+			Condition.Requires( config ).IsNotNull();
+			Condition.Requires( throttler ).IsNotNull();
+
+			return new EtsyAuthenticationService( config, throttler );
 		}
 
 		/// <summary>
 		///	Returns service to work with Etsy's receipts
 		/// </summary>
 		/// <returns></returns>
-		public IEtsyOrdersService CreateOrdersService()
+		public IEtsyOrdersService CreateOrdersService( EtsyConfig config, Throttler throttler )
 		{
-			return new EtsyOrdersService( _config, _throttler );
+			Condition.Requires( config ).IsNotNull();
+			Condition.Requires( throttler ).IsNotNull();
+
+			return new EtsyOrdersService( config, throttler );
 		}
 	}
 }

@@ -16,7 +16,7 @@ namespace EtsyAccessTests
 	public class ThrottlerTests : BaseTest
 	{
 		[ Test ]
-		public async Task TestThrottler()
+		public void TestThrottler()
 		{
 			ThreadPool.SetMinThreads(100, 4);
 			System.Net.ServicePointManager.DefaultConnectionLimit = 100;

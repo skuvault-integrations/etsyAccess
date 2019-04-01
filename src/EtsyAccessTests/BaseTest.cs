@@ -4,13 +4,13 @@ using System.Reflection;
 using System.Security.Policy;
 using EtsyAccess;
 using EtsyAccess.Models.Configuration;
+using EtsyAccess.Models.Throttling;
 using EtsyAccess.Services;
 using EtsyAccess.Services.Authentication;
 using EtsyAccess.Services.Common;
 using EtsyAccess.Services.Items;
 using EtsyAccess.Services.Orders;
 using FluentAssertions;
-using Netco.ThrottlerServices;
 using NUnit.Framework;
 
 namespace EtsyAccessTests
@@ -43,12 +43,13 @@ namespace EtsyAccessTests
 			var config = new EtsyConfig( credentials.ApplicationKey, credentials.SharedSecret, credentials.ShopId,
 				credentials.Token, credentials.TokenSecret );
 
-			var factory = new EtsyServicesFactory( config);
+			var factory = new EtsyServicesFactory();
+			var throttler = new Throttler( config.ThrottlingMaxRequestsPerRestoreInterval, config.ThrottlingRestorePeriodInSeconds, config.ThrottlingMaxRetryAttempts );
 
-			EtsyOrdersService = factory.CreateOrdersService();
-			EtsyItemsService = factory.CreateItemsService();
-			EtsyAuthenticationService = factory.CreateAuthenticationService();
-			EtsyAdminService = factory.CreateAdminService();
+			EtsyOrdersService = factory.CreateOrdersService( config, throttler );
+			EtsyItemsService = factory.CreateItemsService( config, throttler );
+			EtsyAuthenticationService = factory.CreateAuthenticationService( config, throttler );
+			EtsyAdminService = factory.CreateAdminService( config, throttler);
 		}
 
 		private TestCredentials LoadCredentials()

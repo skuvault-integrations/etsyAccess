@@ -3,17 +3,18 @@ using EtsyAccess.Services.Orders;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using EtsyAccess.Models.Configuration;
+using EtsyAccess.Models.Throttling;
 using EtsyAccess.Services.Authentication;
 using EtsyAccess.Services.Common;
-using Netco.ThrottlerServices;
 
 namespace EtsyAccess
 {
 	public interface IEtsyServicesFactory
 	{
-		IEtsyAuthenticationService CreateAuthenticationService();
-		IEtsyOrdersService CreateOrdersService();
-		IEtsyItemsService CreateItemsService();
-		IEtsyAdminService CreateAdminService();
+		IEtsyAuthenticationService CreateAuthenticationService( EtsyConfig config, Throttler throttler );
+		IEtsyOrdersService CreateOrdersService( EtsyConfig config, Throttler throttler );
+		IEtsyItemsService CreateItemsService( EtsyConfig config, Throttler throttler );
+		IEtsyAdminService CreateAdminService( EtsyConfig config, Throttler throttler );
 	}
 }

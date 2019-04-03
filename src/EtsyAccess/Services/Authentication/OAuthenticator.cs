@@ -71,8 +71,17 @@ namespace EtsyAccess.Services.Authentication
 			// extra query parameters
 			if (extraRequestParameters != null)
 			{
-				foreach(var keyValue in extraRequestParameters)
-					requestParameters.Add(keyValue.Key, keyValue.Value);
+				foreach(var keyValue in extraRequestParameters) {
+					if (!requestParameters.ContainsKey(keyValue.Key))
+					{
+						requestParameters.Add(keyValue.Key, keyValue.Value);
+					} 
+					//TODO Do we need to update if the key is already there?
+					//else
+					//{
+					//	requestParameters[keyValue.Key] = keyValue.Value;
+					//}
+				}
 			}
 
 			Uri uri = new Uri(url);

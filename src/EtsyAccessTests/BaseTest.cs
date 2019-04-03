@@ -1,17 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Security.Policy;
 using System.Threading;
 using EtsyAccess;
 using EtsyAccess.Models.Configuration;
 using EtsyAccess.Models.Throttling;
-using EtsyAccess.Services;
 using EtsyAccess.Services.Authentication;
 using EtsyAccess.Services.Common;
 using EtsyAccess.Services.Items;
 using EtsyAccess.Services.Orders;
-using FluentAssertions;
 using NUnit.Framework;
 
 namespace EtsyAccessTests
@@ -19,7 +16,6 @@ namespace EtsyAccessTests
 	public class TestCredentials
 	{
 		public string ShopName { get; set; }
-		public int ShopId { get; set; }
 		public string ApplicationKey { get; set; }
 		public string SharedSecret { get; set; }
 		public string Token { get; set; }
@@ -42,7 +38,7 @@ namespace EtsyAccessTests
 			var credentials = LoadCredentials();
 
 			ShopName = credentials.ShopName;
-			var config = new EtsyConfig( credentials.ApplicationKey, credentials.SharedSecret, credentials.ShopId,
+			var config = new EtsyConfig( credentials.ApplicationKey, credentials.SharedSecret, credentials.ShopName,
 				credentials.Token, credentials.TokenSecret );
 
 			var factory = new EtsyServicesFactory();
@@ -64,7 +60,6 @@ namespace EtsyAccessTests
 				return new TestCredentials()
 				{
 					ShopName = reader.ReadLine(),
-					ShopId = int.Parse( reader.ReadLine() ),
 					ApplicationKey = reader.ReadLine(),
 					SharedSecret = reader.ReadLine(),
 					Token = reader.ReadLine(),

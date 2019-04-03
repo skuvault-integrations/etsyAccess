@@ -253,7 +253,7 @@ namespace EtsyAccess.Services.Items
 		public async Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus, CancellationToken token )
 		{
 			var mark = Mark.CreateNew();
-			var url = String.Format( EtsyEndPoint.GetShopActiveListingsUrl, Config.ShopId );
+			var url = String.Format( EtsyEndPoint.GetShopActiveListingsUrl, Config.ShopName );
 
 			try
 			{

@@ -10,7 +10,7 @@ namespace EtsyAccess.Models.Configuration
 		/// <summary>
 		///	Tenant shop id
 		/// </summary>
-		public int? ShopId { get; private set; }
+		public string ShopName { get; private set; }
 		/// <summary>
 		///	Consumer key in OAuth 1.0 terms
 		/// </summary>
@@ -68,17 +68,17 @@ namespace EtsyAccess.Models.Configuration
 			SharedSecret = sharedSecret;
 		}
 
-		public EtsyConfig( string applicationKey, string sharedSecret, int shopId, string token, string tokenSecret )
+		public EtsyConfig( string applicationKey, string sharedSecret, string shopName, string token, string tokenSecret )
 		{
 			Condition.Requires( applicationKey ).IsNotNullOrEmpty();
 			Condition.Requires( sharedSecret ).IsNotNullOrEmpty();
-			Condition.Requires( shopId ).IsGreaterThan( 0 );
+			Condition.Requires( shopName ).IsNotNullOrEmpty();
 			Condition.Requires( token ).IsNotNullOrEmpty();
 			Condition.Requires( tokenSecret ).IsNotNullOrEmpty();
 
 			ApplicationKey = applicationKey;
 			SharedSecret = sharedSecret;
-			ShopId = shopId;
+			ShopName = shopName;
 			Token = token;
 			TokenSecret = tokenSecret;
 		}

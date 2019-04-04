@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FluentAssertions;
+﻿using FluentAssertions;
 using NUnit.Framework;
 
 namespace EtsyAccessTests
@@ -23,7 +18,7 @@ namespace EtsyAccessTests
 		public void GetTemporaryCredentials()
 		{
 			var credentials = this.EtsyAuthenticationService
-				.GetTemporaryCredentials( new string[] { "listings_w transactions_r" } ).GetAwaiter().GetResult();
+				.GetTemporaryCredentials( new[] { "listings_w listings_r transactions_r" } ).GetAwaiter().GetResult();
 
 			credentials.Should().NotBeNull();
 		}

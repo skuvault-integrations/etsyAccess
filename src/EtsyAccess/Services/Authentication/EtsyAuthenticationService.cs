@@ -46,7 +46,8 @@ namespace EtsyAccess.Services.Authentication
 	/// </summary>
 	public class EtsyAuthenticationService : BaseService, IEtsyAuthenticationService
 	{
-		public EtsyAuthenticationService( EtsyConfig config, Throttler throttler ) : base( config, throttler )
+		public EtsyAuthenticationService( string applicationKey, string sharedSecret, EtsyConfig config, Throttler throttler ) 
+			: base( applicationKey, sharedSecret, config, throttler )
 		{
 		}
 

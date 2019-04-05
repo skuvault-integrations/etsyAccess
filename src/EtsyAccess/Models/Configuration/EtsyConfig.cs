@@ -14,14 +14,6 @@ namespace EtsyAccess.Models.Configuration
 		/// <summary>
 		///	Consumer key in OAuth 1.0 terms
 		/// </summary>
-		public string ApplicationKey { get; private set; }
-		/// <summary>
-		///	Consumer secret in OAuth 1.0 terms
-		/// </summary>
-		public string SharedSecret { get; private set; }
-		/// <summary>
-		///	Permanent token
-		/// </summary>
 		public string Token { get; private set; }
 		/// <summary>
 		///	Permanent token secret
@@ -59,25 +51,12 @@ namespace EtsyAccess.Models.Configuration
 		/// </summary>
 		public readonly int ThrottlingMaxRetryAttempts = 10;
 
-		public EtsyConfig( string applicationKey, string sharedSecret )
+		public EtsyConfig( string shopName, string token, string tokenSecret )
 		{
-			Condition.Requires( applicationKey ).IsNotNullOrEmpty();
-			Condition.Requires( sharedSecret ).IsNotNullOrEmpty();
-
-			ApplicationKey = applicationKey;
-			SharedSecret = sharedSecret;
-		}
-
-		public EtsyConfig( string applicationKey, string sharedSecret, string shopName, string token, string tokenSecret )
-		{
-			Condition.Requires( applicationKey ).IsNotNullOrEmpty();
-			Condition.Requires( sharedSecret ).IsNotNullOrEmpty();
 			Condition.Requires( shopName ).IsNotNullOrEmpty();
 			Condition.Requires( token ).IsNotNullOrEmpty();
 			Condition.Requires( tokenSecret ).IsNotNullOrEmpty();
 
-			ApplicationKey = applicationKey;
-			SharedSecret = sharedSecret;
 			ShopName = shopName;
 			Token = token;
 			TokenSecret = tokenSecret;

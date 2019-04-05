@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
@@ -15,7 +14,8 @@ namespace EtsyAccess.Services.Common
 {
 	public class EtsyAdminService : BaseService, IEtsyAdminService
 	{
-		public EtsyAdminService( EtsyConfig config, Throttler throttler ) : base( config, throttler )
+		public EtsyAdminService( string applicationKey, string sharedSecret, EtsyConfig config, Throttler throttler ) 
+			: base( applicationKey, sharedSecret, config, throttler )
 		{ }
 
 		/// <summary>

@@ -4,10 +4,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Xsl;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Shared;
@@ -16,12 +14,13 @@ using EtsyAccess.Models.Configuration;
 using EtsyAccess.Models.Throttling;
 using EtsyAccess.Services.Authentication;
 using Newtonsoft.Json;
-using Polly;
 
 namespace EtsyAccess.Services
 {
 	public class BaseService
 	{
+		protected readonly string ApplicationKey;
+		protected readonly string SharedSecret;
 		protected readonly EtsyConfig Config;
 		protected readonly HttpClient HttpClient;
 		protected readonly OAuthenticator Authenticator;
@@ -38,11 +37,15 @@ namespace EtsyAccess.Services
 			set => _additionalLogInfo = value;
 		}
 
-		public BaseService( EtsyConfig config, Throttler throttler )
+		public BaseService( string applicationKey, string sharedSecret, EtsyConfig config, Throttler throttler )
 		{
+			Condition.Requires( applicationKey ).IsNotNullOrEmpty();
+			Condition.Requires( sharedSecret ).IsNotNullOrEmpty();
 			Condition.Requires( config ).IsNotNull();
 			Condition.Requires( throttler ).IsNotNull();
 
+			this.ApplicationKey = applicationKey;
+			this.SharedSecret = sharedSecret;
 			this.Config = config;
 			this.Throttler = throttler;
 
@@ -51,7 +54,7 @@ namespace EtsyAccess.Services
 				BaseAddress = new Uri( Config.ApiBaseUrl ) 
 			};
 
-			Authenticator = new OAuthenticator( Config.ApplicationKey, Config.SharedSecret, Config.Token, Config.TokenSecret );
+			Authenticator = new OAuthenticator( ApplicationKey, SharedSecret, Config.Token, Config.TokenSecret );
 
 			_requestTimeoutCancellationTokenSource = new CancellationTokenSource();
 		}

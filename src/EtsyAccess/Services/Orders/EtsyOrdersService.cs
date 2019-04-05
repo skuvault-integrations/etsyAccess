@@ -13,7 +13,8 @@ namespace EtsyAccess.Services.Orders
 {
 	public class EtsyOrdersService : BaseService, IEtsyOrdersService
 	{
-		public EtsyOrdersService( EtsyConfig config, Throttler throttler ) : base( config, throttler )
+		public EtsyOrdersService( string applicationKey, string sharedSecret, EtsyConfig config, Throttler throttler ) 
+			: base( applicationKey, sharedSecret, config, throttler )
 		{
 		}
 

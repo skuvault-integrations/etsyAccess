@@ -29,7 +29,6 @@ namespace EtsyAccessTests
 		protected IEtsyAuthenticationService EtsyAuthenticationService { get; set; }
 		protected IEtsyAdminService EtsyAdminService { get; set; }
 		protected string ShopName;
-		protected EtsyConfig Config;
 		protected CancellationTokenSource CancellationTokenSource;
 
 		[ SetUp ]
@@ -38,10 +37,9 @@ namespace EtsyAccessTests
 			var credentials = LoadCredentials();
 
 			ShopName = credentials.ShopName;
-			var config = new EtsyConfig( credentials.ApplicationKey, credentials.SharedSecret, credentials.ShopName,
-				credentials.Token, credentials.TokenSecret );
+			var config = new EtsyConfig( credentials.ShopName, credentials.Token, credentials.TokenSecret );
 
-			var factory = new EtsyServicesFactory();
+			var factory = new EtsyServicesFactory( credentials.ApplicationKey, credentials.SharedSecret );
 			var throttler = new Throttler( config.ThrottlingMaxRequestsPerRestoreInterval, config.ThrottlingRestorePeriodInSeconds, config.ThrottlingMaxRetryAttempts );
 
 			EtsyOrdersService = factory.CreateOrdersService( config, throttler );

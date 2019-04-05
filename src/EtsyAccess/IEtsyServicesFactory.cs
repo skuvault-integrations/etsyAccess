@@ -1,8 +1,5 @@
 ﻿using EtsyAccess.Services.Items;
 using EtsyAccess.Services.Orders;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using EtsyAccess.Models.Configuration;
 using EtsyAccess.Models.Throttling;
 using EtsyAccess.Services.Authentication;

@@ -17,7 +17,8 @@ namespace EtsyAccess.Services.Items
 {
 	public class EtsyItemsService : BaseService, IEtsyItemsService
 	{
-		public EtsyItemsService( EtsyConfig config, Throttler throttler ) : base( config, throttler )
+		public EtsyItemsService( string applicationKey, string sharedSecret, EtsyConfig config, Throttler throttler ) 
+			: base( applicationKey, sharedSecret, config, throttler )
 		{ }
 
 		public void UpdateSkuQuantity( string sku, int quantity, CancellationToken token )

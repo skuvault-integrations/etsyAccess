@@ -44,7 +44,7 @@ namespace EtsyAccessTests
 
 			EtsyOrdersService = factory.CreateOrdersService( config, throttler );
 			EtsyItemsService = factory.CreateItemsService( config, throttler );
-			EtsyAuthenticationService = factory.CreateAuthenticationService( config, throttler );
+			EtsyAuthenticationService = factory.CreateAuthenticationService( config );
 			EtsyAdminService = factory.CreateAdminService( config, throttler );
 			CancellationTokenSource = new CancellationTokenSource();
 		}

@@ -61,6 +61,10 @@ namespace EtsyAccess.Models.Configuration
 			Token = token;
 			TokenSecret = tokenSecret;
 		}
+
+		public EtsyConfig()
+		{
+		}
 	}
 
 	public class EtsyEndPoint

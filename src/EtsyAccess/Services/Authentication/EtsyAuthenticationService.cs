@@ -30,7 +30,6 @@ namespace EtsyAccess.Services.Authentication
 
 		public OAuthCredentials( string loginUrl, string token, string tokenSecret )
 		{
-			Condition.Requires( loginUrl ).IsNotNullOrEmpty();
 			Condition.Requires( token ).IsNotNullOrEmpty();
 			Condition.Requires( tokenSecret ).IsNotNullOrEmpty();
 

@@ -52,10 +52,10 @@ namespace EtsyAccess.Services.Authentication
 		/// <param name="tokenSecret"></param>
 		/// <param name="extraRequestParameters"></param>
 		/// <returns></returns>
-		public Dictionary<string, string> GetOAuthRequestParameters( string url, string method, string tokenSecret, Dictionary<string, string> extraRequestParameters )
+		public Dictionary< string, string > GetOAuthRequestParameters( string url, string method, string tokenSecret, Dictionary< string, string > extraRequestParameters )
 		{
 			// standard OAuth 1.0 request parameters
-			var requestParameters = new Dictionary<string, string>
+			var requestParameters = new Dictionary< string, string >
 			{
 				{ "oauth_consumer_key", _consumerKey },
 				{ "oauth_nonce", GetRandomSessionNonce() },
@@ -65,26 +65,25 @@ namespace EtsyAccess.Services.Authentication
 			};
 
 			// if request token exists
-			if (!string.IsNullOrEmpty(_token))
+			if ( !string.IsNullOrEmpty( _token ) )
 				requestParameters.Add("oauth_token", _token);
 
 			// extra query parameters
-			if (extraRequestParameters != null)
+			if ( extraRequestParameters != null )
 			{
-				foreach(var keyValue in extraRequestParameters) {
-					if (!requestParameters.ContainsKey(keyValue.Key))
+				foreach( var keyValue in extraRequestParameters ) {
+					if ( !requestParameters.ContainsKey( keyValue.Key ) )
 					{
-						requestParameters.Add(keyValue.Key, keyValue.Value);
+						requestParameters.Add( keyValue.Key, keyValue.Value );
 					} 
-					//TODO Do we need to update if the key is already there?
-					//else
-					//{
-					//	requestParameters[keyValue.Key] = keyValue.Value;
-					//}
+					else
+					{
+						requestParameters[ keyValue.Key ] = keyValue.Value;
+					}
 				}
 			}
 
-			Uri uri = new Uri(url);
+			Uri uri = new Uri( url );
 			string baseUrl = uri.Scheme + "://" + uri.Host + uri.LocalPath;
 
 			// extra parameters can be placed also directly in the url
@@ -102,8 +101,8 @@ namespace EtsyAccess.Services.Authentication
 			requestParameters.Add( "oauth_signature", signature );
 
 			// if http method isn't GET all request parameters should be included in the request body
-			if (extraRequestParameters != null
-			    && !method.ToUpper().Equals("GET"))
+			if ( extraRequestParameters != null
+			    && !method.ToUpper().Equals( "GET" ) )
 			{
 				foreach ( var keyValue in extraRequestParameters )
 					requestParameters.Remove( keyValue.Key );

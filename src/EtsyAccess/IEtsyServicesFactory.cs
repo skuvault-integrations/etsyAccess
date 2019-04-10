@@ -9,7 +9,7 @@ namespace EtsyAccess
 {
 	public interface IEtsyServicesFactory
 	{
-		IEtsyAuthenticationService CreateAuthenticationService( EtsyConfig config, Throttler throttler );
+		IEtsyAuthenticationService CreateAuthenticationService( EtsyConfig config );
 		IEtsyOrdersService CreateOrdersService( EtsyConfig config, Throttler throttler );
 		IEtsyItemsService CreateItemsService( EtsyConfig config, Throttler throttler );
 		IEtsyAdminService CreateAdminService( EtsyConfig config, Throttler throttler );

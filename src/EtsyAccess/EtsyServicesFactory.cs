@@ -49,10 +49,10 @@ namespace EtsyAccess
 		///	Returns service to work with credentials
 		/// </summary>
 		/// <returns></returns>
-		public IEtsyAuthenticationService CreateAuthenticationService( EtsyConfig config, Throttler throttler )
+		public IEtsyAuthenticationService CreateAuthenticationService( EtsyConfig config )
 		{
 			Condition.Requires( config ).IsNotNull();
-			Condition.Requires( throttler ).IsNotNull();
+			var throttler = new Throttler( config.ThrottlingMaxRequestsPerRestoreInterval, config.ThrottlingRestorePeriodInSeconds, config.ThrottlingMaxRetryAttempts );
 
 			return new EtsyAuthenticationService( this._applicationKey, this._sharedSecret, config, throttler );
 		}

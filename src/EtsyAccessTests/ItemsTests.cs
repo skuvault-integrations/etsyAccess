@@ -29,6 +29,22 @@ namespace EtsyAccessTests
 		}
 
 		[ Test ]
+		public void UpdateSkuQuantityToZero()
+		{
+			string sku = "testSku1";
+			int quantity = 0;
+
+			this.EtsyItemsService.UpdateSkuQuantity( sku, quantity, CancellationToken.None );
+
+			// assert
+			var inventory = this.EtsyItemsService.GetListingProductBySku( sku, CancellationToken.None ).GetAwaiter().GetResult();
+
+			inventory.Should().NotBeNull();
+			inventory.Offerings.Should().NotBeNullOrEmpty();
+			inventory.Offerings.First().Quantity.Should().Be( quantity );
+		}
+
+		[ Test ]
 		public void UpdateSkusQuantities()
 		{
 			string sku = "testSku1";

@@ -54,6 +54,8 @@ namespace EtsyAccess.Services
 				BaseAddress = new Uri( Config.ApiBaseUrl ) 
 			};
 
+			SetSslSettings();
+
 			Authenticator = new OAuthenticator( ApplicationKey, SharedSecret, Config.Token, Config.TokenSecret );
 
 			_requestTimeoutCancellationTokenSource = new CancellationTokenSource();
@@ -313,6 +315,11 @@ namespace EtsyAccess.Services
 				limits = new EtsyLimits( int.Parse( rateLimit.First() ), int.Parse( rateLimitRemaining.First() ) );
 
 			return limits;
+		}
+
+		private void SetSslSettings()
+		{
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 		}
 	}
 }

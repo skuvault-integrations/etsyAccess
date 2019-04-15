@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web;
+using System.Net.Http;
 using CuttingEdge.Conditions;
 
 namespace EtsyAccess.Services.Authentication
@@ -87,7 +87,7 @@ namespace EtsyAccess.Services.Authentication
 			string baseUrl = uri.Scheme + "://" + uri.Host + uri.LocalPath;
 
 			// extra parameters can be placed also directly in the url
-			var queryParams = HttpUtility.ParseQueryString(uri.Query);
+			var queryParams = uri.ParseQueryString();
 
 			foreach ( var key in queryParams.AllKeys )
 			{

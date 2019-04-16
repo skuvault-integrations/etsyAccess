@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-    <Version>0.1.0-rc12</Version>
+    <Version>0.1.0-rc15</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Company>SkuVault</Company>
     <Authors>SkuVault</Authors>
@@ -13,7 +13,6 @@
     <PackageReference Include="Netco.NLog" Version="1.5.8" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="Polly" Version="7.0.3" />
-    <PackageReference Include="System.Net.Http.Formatting.Extension" Version="5.2.3" />
   </ItemGroup>
 
 </Project>

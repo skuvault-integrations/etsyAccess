@@ -35,5 +35,33 @@ namespace EtsyAccess.Shared
 				return "{}";
 			}
 		}
+
+		/// <summary>
+		///	Parses url query string into dictionary
+		/// </summary>
+		/// <param name="queryParams">Query parameters</param>
+		/// <returns></returns>
+		public static Dictionary< string, string > ParseQueryParams( string queryParams )
+		{
+			var result = new Dictionary< string, string >();
+
+			if ( !string.IsNullOrEmpty( queryParams ) )
+			{
+				string[] keyValuePairs = queryParams.Split( '&' );
+
+				foreach ( string keyValuePair in keyValuePairs )
+				{
+					string[] keyValue = keyValuePair.Split( '=' );
+
+					if ( keyValue.Length == 2 )
+					{
+						if ( !result.TryGetValue( keyValue[0], out var tmp ) )
+							result.Add( keyValue[0], keyValue[1] );
+					}
+				}
+			}
+
+			return result;
+		}
 	}
 }

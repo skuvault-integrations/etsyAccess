@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Net.Http;
 using CuttingEdge.Conditions;
+using EtsyAccess.Shared;
 
 namespace EtsyAccess.Services.Authentication
 {
@@ -87,12 +87,12 @@ namespace EtsyAccess.Services.Authentication
 			string baseUrl = uri.Scheme + "://" + uri.Host + uri.LocalPath;
 
 			// extra parameters can be placed also directly in the url
-			var queryParams = uri.ParseQueryString();
+			var queryParams = Misc.ParseQueryParams( uri.Query );
 
-			foreach ( var key in queryParams.AllKeys )
+			foreach ( var queryParam in queryParams )
 			{
-				if ( !requestParameters.ContainsKey( key ) )
-					requestParameters.Add( key, queryParams[key] );
+				if ( !requestParameters.ContainsKey( queryParam.Key ) )
+					requestParameters.Add( queryParam.Key, queryParams[ queryParam.Key ] );
 			}
 
 			requestParameters.Remove( "oauth_signature" );

@@ -1,23 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
 using EtsyAccess.Shared;
 using EtsyAccess.Models.Configuration;
 using EtsyAccess.Models.Throttling;
-using NLog;
-using NLog.Fluent;
-using NLog.LayoutRenderers.Wrappers;
 using Polly;
 
 namespace EtsyAccess.Services.Authentication
@@ -95,7 +84,7 @@ namespace EtsyAccess.Services.Authentication
 
 						EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: result.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
 
-						var queryParams = ParseQueryParams( result );
+						var queryParams = Misc.ParseQueryParams( result );
 						queryParams.TryGetValue( "oauth_token", out var token );
 						queryParams.TryGetValue( "oauth_token_secret", out var tokenSecret );
 
@@ -168,7 +157,7 @@ namespace EtsyAccess.Services.Authentication
 
 							if ( temp.Length == 2 )
 							{
-								var queryParams = ParseQueryParams( temp[1] );
+								var queryParams = Misc.ParseQueryParams( temp[1] );
 								queryParams.TryGetValue( "oauth_token", out var token );
 								queryParams.TryGetValue( "oauth_token_secret", out var tokenSecret );
 
@@ -185,34 +174,6 @@ namespace EtsyAccess.Services.Authentication
 
 					return credentials;
 				});
-		}
-
-		/// <summary>
-		///	Parses url query string into dictionary
-		/// </summary>
-		/// <param name="queryParams">Query parameters</param>
-		/// <returns></returns>
-		private Dictionary< string, string > ParseQueryParams( string queryParams )
-		{
-			var result = new Dictionary< string, string >();
-
-			if ( !string.IsNullOrEmpty( queryParams ) )
-			{
-				string[] keyValuePairs = queryParams.Split( '&' );
-
-				foreach ( string keyValuePair in keyValuePairs )
-				{
-					string[] keyValue = keyValuePair.Split( '=' );
-
-					if ( keyValue.Length == 2 )
-					{
-						if ( !result.TryGetValue( keyValue[0], out var tmp ) )
-							result.Add( keyValue[0], keyValue[1] );
-					}
-				}
-			}
-
-			return result;
 		}
 	}
 }

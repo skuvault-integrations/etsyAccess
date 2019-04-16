@@ -20,6 +20,15 @@ namespace EtsyAccess.Models.Throttling
 			get { return _remainingQuota; }
 		}
 
+		/// <summary>
+		///	API limits (total per day)
+		/// </summary>
+		public int DayLimit { get; set; }
+		/// <summary>
+		///	API requests remaining
+		/// </summary>
+		public int DayLimitRemaining { get; set; }
+
 		private readonly int _maxQuota;
 		private readonly int _quotaRestoreTimeInSeconds;
 		private readonly int _maxRetryCount;

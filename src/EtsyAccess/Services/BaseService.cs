@@ -291,8 +291,13 @@ namespace EtsyAccess.Services
 		{
 			var limits = GetEtsyLimits( response );
 
-			if ( limits != null )
+			if (limits != null)
+			{
+				Throttler.DayLimit = limits.TotalAvailableRequests;
+				Throttler.DayLimitRemaining = limits.CallsRemaining;
+
 				EtsyLogger.LogTrace( String.Format( "{0}, Total calls: {1}, Remaining calls: {2} ", info, limits.TotalAvailableRequests, limits.CallsRemaining ));
+			}
 		}
 
 		/// <summary>

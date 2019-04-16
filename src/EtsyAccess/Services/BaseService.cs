@@ -291,7 +291,7 @@ namespace EtsyAccess.Services
 		{
 			var limits = GetEtsyLimits( response );
 
-			if (limits != null)
+			if ( limits != null )
 			{
 				Throttler.DayLimit = limits.TotalAvailableRequests;
 				Throttler.DayLimitRemaining = limits.CallsRemaining;

@@ -14,6 +14,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{87D8FD
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtsyAccessV1", "EtsyAccessV1\EtsyAccessV1.csproj", "{16059D38-B357-4C36-9417-1FBA221AC04B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtsyAccessV1Tests", "EtsyAccessV1Tests\EtsyAccessV1Tests.csproj", "{FABC2CF7-3F0B-4478-838D-8739F57E6B53}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +32,14 @@ Global
 		{C14A1279-8FB0-4A10-91BD-7C97C46547D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C14A1279-8FB0-4A10-91BD-7C97C46547D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C14A1279-8FB0-4A10-91BD-7C97C46547D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16059D38-B357-4C36-9417-1FBA221AC04B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16059D38-B357-4C36-9417-1FBA221AC04B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16059D38-B357-4C36-9417-1FBA221AC04B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16059D38-B357-4C36-9417-1FBA221AC04B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FABC2CF7-3F0B-4478-838D-8739F57E6B53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FABC2CF7-3F0B-4478-838D-8739F57E6B53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FABC2CF7-3F0B-4478-838D-8739F57E6B53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FABC2CF7-3F0B-4478-838D-8739F57E6B53}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

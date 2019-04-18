@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace EtsyAccessTests
+namespace EtsyAccessV1Tests
 {
 	public class ItemsTests : BaseTest
 	{

@@ -47,7 +47,7 @@ namespace EtsyAccess.Shared
 
 			if ( !string.IsNullOrEmpty( queryParams ) )
 			{
-				string[] keyValuePairs = queryParams.Split( '&' );
+				string[] keyValuePairs = queryParams.Replace( "?", "" ).Split( '&' );
 
 				foreach ( string keyValuePair in keyValuePairs )
 				{

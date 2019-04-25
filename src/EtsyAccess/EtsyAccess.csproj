@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-    <Version>0.1.0-rc17</Version>
+    <TargetFrameworks>net45</TargetFrameworks>
+    <Version>0.1.0-rc18</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Company>SkuVault</Company>
     <Authors>SkuVault</Authors>
@@ -12,7 +12,7 @@
     <PackageReference Include="CuttingEdge.Conditions" Version="1.2.0" />
     <PackageReference Include="Netco.NLog" Version="1.5.8" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="Polly-Signed" Version="5.9.0" />
+    <PackageReference Include="Polly" Version="7.0.3" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
   </ItemGroup>
 

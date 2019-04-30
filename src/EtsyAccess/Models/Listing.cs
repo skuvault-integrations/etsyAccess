@@ -173,7 +173,7 @@ namespace EtsyAccess.Models
 		/// How much the item weighs
 		/// </summary>
 		[JsonProperty("item_weight")]
-		public int ItemWeight { get; set; }
+		public int? ItemWeight { get; set; }
 		/// <summary>
 		/// The units used to represent the weight of this item
 		/// </summary>
@@ -183,17 +183,17 @@ namespace EtsyAccess.Models
 		/// How long the item is
 		/// </summary>
 		[JsonProperty("item_length")]
-		public float ItemLength { get; set; }
+		public float? ItemLength { get; set; }
 		/// <summary>
 		/// How wide the item is
 		/// </summary>
 		[JsonProperty("item_width")]
-		public float ItemWidth { get; set; }
+		public float? ItemWidth { get; set; }
 		/// <summary>
 		/// How tall the item is
 		/// </summary>
 		[JsonProperty("item_height")]
-		public float ItemHeight { get; set; }
+		public float? ItemHeight { get; set; }
 		/// <summary>
 		/// The units used to represent the dimensions of this item
 		/// </summary>

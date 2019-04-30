@@ -75,6 +75,7 @@
     <Compile Include="AuthenticationTests.cs" />
     <Compile Include="BaseTest.cs" />
     <Compile Include="ItemsTests.cs" />
+    <Compile Include="ModelsTests.cs" />
     <Compile Include="OrdersTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ThrottlerTests.cs" />

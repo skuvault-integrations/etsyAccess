@@ -45,7 +45,7 @@ namespace EtsyAccess.Models.Throttling
 				{
 					try
 					{
-						return await funcToThrottle();
+						return await funcToThrottle().ConfigureAwait( false );
 					}
 					catch ( Exception exception )
 					{

@@ -104,7 +104,7 @@ namespace EtsyAccess.Services
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
-			});
+			}).ConfigureAwait( false );
 			
 			var response = JsonConvert.DeserializeObject< EtsyResponse< T > >( responseContent );
 
@@ -171,7 +171,7 @@ namespace EtsyAccess.Services
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
-			});
+			}).ConfigureAwait( false );
 
 			var response = JsonConvert.DeserializeObject< EtsyResponseSingleEntity< T > >( responseContent );
 

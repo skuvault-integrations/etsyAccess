@@ -9,7 +9,7 @@ using Netco.ThrottlerServices;
 
 namespace EtsyAccess.Models.Throttling
 {
-	public sealed class Throttler
+	public sealed class Throttler : IDisposable
 	{
 		public int MaxQuota
 		{
@@ -139,5 +139,27 @@ namespace EtsyAccess.Models.Throttling
 				Trace.WriteLine($"[{ DateTime.Now }] Restored { _maxQuota } quota" );
 			#endif
 		}
+
+		#region IDisposable Support
+		private bool disposedValue = false;
+
+		void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					_timer.Dispose();
+				}
+
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+		}
+		#endregion
 	}
 }

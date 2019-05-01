@@ -6,7 +6,7 @@ namespace EtsyAccessTests
 	public class ActionPolicyTests
 	{
 		[ Test ]
-		public void WhenDelayBeforeNextAttemptIsCalled_ThenItReturnsCorrectDelay( [ Values( 1, 3, 9 )] int retryCount )
+		public void GetDelayBeforeNextAttempt( [ Values( 1, 3, 9 )] int retryCount )
 		{
 			var delay = ActionPolicy.GetDelayBeforeNextAttempt( retryCount );
 

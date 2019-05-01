@@ -6,7 +6,7 @@ namespace EtsyAccessTests
 	public class ModelsTests
 	{
 		[Test]
-		public void GivenListingOptionalFieldsLeftBlank_WhenInitializeListing_ThenItInitializes()
+		public void Listing_WhenGivenListingOptionalFieldsLeftBlank_ThenItInitializesListing()
 		{
 			var listing = new Listing
 			{

@@ -229,7 +229,7 @@ namespace EtsyAccess.Services
 		/// </summary>
 		/// <param name="response">Http response</param>
 		/// <param name="message">response message</param>
-		protected void ThrowIfError( HttpResponseMessage response, string message )
+		public void ThrowIfError( HttpResponseMessage response, string message )
 		{
 			HttpStatusCode responseStatusCode = response.StatusCode;
 
@@ -243,7 +243,7 @@ namespace EtsyAccess.Services
 			if ( message.IndexOf("exceeded your quota", StringComparison.InvariantCulture ) > -1 )
 				throw new EtsyApiLimitsExceeded( GetEtsyLimits( response ), message );
 
-			throw new EtsyServerException( message, (int)responseStatusCode);
+			throw new EtsyServerException( message, (int)responseStatusCode );
 		}
 
 		/// <summary>
@@ -256,7 +256,7 @@ namespace EtsyAccess.Services
 		/// <param name="additionalInfo">Extra logging information</param>
 		/// <param name="memberName">Method name</param>
 		/// <returns></returns>
-		protected string CreateMethodCallInfo( string url = "", Mark mark = null, string errors = "", string methodResult = "", string additionalInfo = "", [ CallerMemberName ] string memberName = "" )
+		public string CreateMethodCallInfo( string url = "", Mark mark = null, string errors = "", string methodResult = "", string additionalInfo = "", [ CallerMemberName ] string memberName = "" )
 		{
 			string serviceEndPoint = null;
 			string requestParameters = null;
@@ -305,7 +305,7 @@ namespace EtsyAccess.Services
 		/// </summary>
 		/// <param name="response"></param>
 		/// <returns></returns>
-		private EtsyLimits GetEtsyLimits( HttpResponseMessage response )
+		public EtsyLimits GetEtsyLimits( HttpResponseMessage response )
 		{
 			EtsyLimits limits = null;
 

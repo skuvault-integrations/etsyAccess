@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net.Http;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
-using EtsyAccess.Shared;
 using Polly;
 
 namespace EtsyAccess.Models.Throttling
@@ -36,7 +31,7 @@ namespace EtsyAccess.Models.Throttling
 		{
 			return Policy.Handle< EtsyNetworkException >()
 				.WaitAndRetryAsync( _retryAttempts,
-					retryAttempt => TimeSpan.FromSeconds( Math.Pow( 2, retryAttempt ) ),
+					retryCount => TimeSpan.FromSeconds( GetDelayBeforeNextAttempt(retryCount) ),
 					( entityRaw, timeSpan, retryCount, context ) =>
 					{
 						onRetryAttempt?.Invoke( timeSpan, retryCount );
@@ -66,6 +61,11 @@ namespace EtsyAccess.Models.Throttling
 					}
 					
 				});
+		}
+
+		public static int GetDelayBeforeNextAttempt( int retryCount )
+		{
+			return 5 + 20 * retryCount;
 		}
 	}
 }

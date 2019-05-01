@@ -100,7 +100,7 @@ namespace EtsyAccess.Services
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * ActionPolicy.GetDelayBeforeNextAttempt( retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
@@ -167,7 +167,7 @@ namespace EtsyAccess.Services
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * ActionPolicy.GetDelayBeforeNextAttempt( retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
@@ -217,7 +217,7 @@ namespace EtsyAccess.Services
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * (int) Math.Pow( 2, retryCount ) );
+							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * ActionPolicy.GetDelayBeforeNextAttempt( retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);

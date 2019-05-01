@@ -71,6 +71,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionPolicyTests.cs" />
     <Compile Include="AdminTest.cs" />
     <Compile Include="AuthenticationTests.cs" />
     <Compile Include="BaseTest.cs" />

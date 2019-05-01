@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CuttingEdge.Conditions;
+﻿using CuttingEdge.Conditions;
 
 namespace EtsyAccess.Models.Configuration
 {
@@ -29,7 +26,7 @@ namespace EtsyAccess.Models.Configuration
 		///	Max retry attempts if we get network errors ( total time for attempts over 14 seconds)
 		/// 
 		/// </summary>
-		public readonly int RetryAttempts = 4;
+		public readonly int RetryAttempts = 10;
 
 		/// <summary>
 		///	Request timeout

@@ -59,7 +59,7 @@ namespace EtsyAccess.Services.Authentication
 
 			return Policy.HandleResult< OAuthCredentials >( credentials => credentials == null )
 				.WaitAndRetryAsync( Config.RetryAttempts,
-					retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+					retryCount => TimeSpan.FromSeconds( ActionPolicy.GetDelayBeforeNextAttempt( retryCount ) ),
 					( entityRaw, timeSpan, retryCount, context ) =>
 					{
 						string retryDetails = CreateMethodCallInfo( EtsyEndPoint.GetAccessTokenUrl, mark, additionalInfo: this.AdditionalLogInfo() );
@@ -121,7 +121,7 @@ namespace EtsyAccess.Services.Authentication
 
 			return Policy.HandleResult<OAuthCredentials>( credentials => credentials == null )
 				.WaitAndRetryAsync( Config.RetryAttempts,
-					retryAttempt => TimeSpan.FromSeconds( Math.Pow(2, retryAttempt) ),
+					retryCount => TimeSpan.FromSeconds( ActionPolicy.GetDelayBeforeNextAttempt( retryCount ) ),
 					(entityRaw, timeSpan, retryCount, context) =>
 					{
 						string retryDetails = CreateMethodCallInfo( EtsyEndPoint.GetRequestTokenUrl, mark, additionalInfo: this.AdditionalLogInfo() );

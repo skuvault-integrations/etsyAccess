@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-    <Version>1.0.1</Version>
+    <Version>1.0.2-rc1</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Company>SkuVault</Company>
     <Authors>SkuVault</Authors>
@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="CuttingEdge.Conditions" Version="1.2.0" />
-    <PackageReference Include="Netco.NLog" Version="1.5.8" />
+    <PackageReference Include="Netco" Version="1.5.8" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="Polly-Signed" Version="5.9.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />

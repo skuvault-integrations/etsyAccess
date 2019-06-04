@@ -25,7 +25,6 @@ namespace EtsyAccess.Services
 		protected readonly HttpClient HttpClient;
 		protected readonly OAuthenticator Authenticator;
 		private Func< string > _additionalLogInfo;
-		private CancellationTokenSource _requestTimeoutCancellationTokenSource;
 		public readonly Throttler Throttler;
 
 		/// <summary>
@@ -57,8 +56,6 @@ namespace EtsyAccess.Services
 			SetSslSettings();
 
 			Authenticator = new OAuthenticator( ApplicationKey, SharedSecret, Config.Token, Config.TokenSecret );
-
-			_requestTimeoutCancellationTokenSource = new CancellationTokenSource();
 		}
 
 		/// <summary>
@@ -82,25 +79,23 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs );
-							var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource( cancellationToken, _requestTimeoutCancellationTokenSource.Token );
+							using( var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource( cancellationToken ) )
+							{
+								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
+								var httpResponse = await HttpClient.GetAsync( url, linkedTokenSource.Token ).ConfigureAwait( false );
+								string content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
-							var httpResponse = await HttpClient.GetAsync( url, linkedCancellationTokenSource.Token ).ConfigureAwait( false );
-							string content = await httpResponse.Content.ReadAsStringAsync()
-								.ConfigureAwait( false );
+								LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
 
-							LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
+								ThrowIfError( httpResponse, content );
 
-							ThrowIfError( httpResponse, content );
-
-							return content;
+								return content;
+							}
 						}, 
-						(timeSpan, retryCount) =>
+						( timeSpan, retryCount ) =>
 						{
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
-
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * ActionPolicy.GetDelayBeforeNextAttempt( retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
@@ -150,24 +145,24 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs );
-							var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource( cancellationToken, _requestTimeoutCancellationTokenSource.Token );
+							using( var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource( cancellationToken ) )
+							{
+								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
 
-							var httpResponse = await HttpClient.GetAsync( url, linkedCancellationTokenSource.Token ).ConfigureAwait( false );
-							var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
+								var httpResponse = await HttpClient.GetAsync( url, linkedTokenSource.Token ).ConfigureAwait( false );
+								var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
-							LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
+								LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
 
-							ThrowIfError( httpResponse, content );
+								ThrowIfError( httpResponse, content );
 
-							return content;
+								return content;
+							}
 						}, 
-						(timeSpan, retryCount) =>
+						( timeSpan, retryCount ) =>
 						{
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
-
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * ActionPolicy.GetDelayBeforeNextAttempt( retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
@@ -200,24 +195,23 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url, "PUT", payload );
 
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs );
-							var linkedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource( token, _requestTimeoutCancellationTokenSource.Token );
-
-							var response = await HttpClient.PutAsync( url, content, linkedCancellationTokenSource.Token ).ConfigureAwait( false );
-							var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+							using( var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource( token ) )
+							{
+								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
+								var response = await HttpClient.PutAsync( url, content, linkedTokenSource.Token ).ConfigureAwait( false );
+								var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 						
-							LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
+								LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
 
-							ThrowIfError( response, responseStr );
+								ThrowIfError( response, responseStr );
 
-							return responseStr;
+								return responseStr;
+							}
 						}, 
-						(timeSpan, retryCount) =>
+						( timeSpan, retryCount ) =>
 						{
 							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
-
-							_requestTimeoutCancellationTokenSource.CancelAfter( Config.RequestTimeoutMs * ActionPolicy.GetDelayBeforeNextAttempt( retryCount ) );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);

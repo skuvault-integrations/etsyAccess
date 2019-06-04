@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using EtsyAccess.Exceptions;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -29,15 +30,15 @@ namespace EtsyAccessTests
 		{
 			string sku = "testSku1";
 			int quantity = 0;
-
-			this.EtsyItemsService.UpdateSkuQuantity( sku, quantity, CancellationToken.None );
+			const string message = "offering must have quantity greater than 0";
 
 			// assert
-			var inventory = this.EtsyItemsService.GetListingProductBySku( sku, CancellationToken.None ).GetAwaiter().GetResult();
+			var etsyException = Assert.Throws< EtsyException >( () =>
+			{
+				this.EtsyItemsService.UpdateSkuQuantity( sku, quantity, CancellationToken.None );
+			});
 
-			inventory.Should().NotBeNull();
-			inventory.Offerings.Should().NotBeNullOrEmpty();
-			inventory.Offerings.First().Quantity.Should().Be( quantity );
+			Assert.That( etsyException.ToString().Contains( message ) );
 		}
 
 		[ Test ]

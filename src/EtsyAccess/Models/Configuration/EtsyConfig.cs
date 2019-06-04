@@ -31,7 +31,7 @@ namespace EtsyAccess.Models.Configuration
 		/// <summary>
 		///	Request timeout
 		/// </summary>
-		public readonly int RequestTimeoutMs = 30 * 1000;
+		public readonly int RequestTimeoutMs;
 
 		/// <summary>
 		///	Throttling, max requests per interval
@@ -48,15 +48,17 @@ namespace EtsyAccess.Models.Configuration
 		/// </summary>
 		public readonly int ThrottlingMaxRetryAttempts = 10;
 
-		public EtsyConfig( string shopName, string token, string tokenSecret )
+		public EtsyConfig( string shopName, string token, string tokenSecret, int requestTimeoutMs = 30 * 1000 )
 		{
 			Condition.Requires( shopName ).IsNotNullOrEmpty();
 			Condition.Requires( token ).IsNotNullOrEmpty();
 			Condition.Requires( tokenSecret ).IsNotNullOrEmpty();
+			Condition.Requires( requestTimeoutMs ).IsGreaterThan( 0 );
 
 			ShopName = shopName;
 			Token = token;
 			TokenSecret = tokenSecret;
+			RequestTimeoutMs = requestTimeoutMs;
 		}
 
 		public EtsyConfig()

@@ -69,6 +69,12 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, CancellationToken cancellationToken, List< T > result = null, Mark mark = null )
 		{
+			if ( cancellationToken.IsCancellationRequested )
+			{
+				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+				throw new EtsyException( string.Format( "{0}. Task was cancelled", exceptionDetails ) );
+			}
+
 			var responseContent = await Throttler.ExecuteAsync(() =>
 			{
 				return new ActionPolicy( Config.RetryAttempts )
@@ -135,6 +141,12 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected async Task< T > GetEntityAsync< T >( string url, CancellationToken cancellationToken, Mark mark = null )
 		{
+			if ( cancellationToken.IsCancellationRequested )
+			{
+				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+				throw new EtsyException( string.Format( "{0}. Task was cancelled", exceptionDetails ) );
+			}
+
 			var responseContent = await Throttler.ExecuteAsync(() =>
 			{
 				return new ActionPolicy( Config.RetryAttempts )
@@ -183,6 +195,12 @@ namespace EtsyAccess.Services
 		/// <returns></returns>
 		protected Task PutAsync(string url, Dictionary<string, string> payload, CancellationToken token, Mark mark = null)
 		{
+			if ( token.IsCancellationRequested )
+			{
+				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+				throw new EtsyException( string.Format( "{0}. Task was cancelled", exceptionDetails ) );
+			}
+
 			return Throttler.ExecuteAsync(() =>
 			{
 				return new ActionPolicy( Config.RetryAttempts )

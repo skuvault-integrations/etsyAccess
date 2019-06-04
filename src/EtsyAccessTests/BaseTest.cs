@@ -49,7 +49,7 @@ namespace EtsyAccessTests
 			CancellationTokenSource = new CancellationTokenSource();
 		}
 
-		private TestCredentials LoadCredentials()
+		protected TestCredentials LoadCredentials()
 		{
 			string path = new Uri( Path.GetDirectoryName( Assembly.GetExecutingAssembly().CodeBase ) ).LocalPath;
 

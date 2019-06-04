@@ -88,6 +88,7 @@
     <Compile Include="AuthenticationServiceTests.cs" />
     <Compile Include="BaseServiceTests.cs" />
     <Compile Include="BaseTest.cs" />
+    <Compile Include="CancellationTokenTests.cs" />
     <Compile Include="ItemsServiceTests.cs" />
     <Compile Include="ModelsTests.cs" />
     <Compile Include="OrdersServiceTests.cs" />

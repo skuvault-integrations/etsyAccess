@@ -41,5 +41,13 @@ namespace EtsyAccess.Services.Items
 		/// <param name="token"></param>
 		/// <returns></returns>
 		Task< ListingProduct > GetListingProductBySku( string sku, CancellationToken token );
+
+		/// <summary>
+		/// Returns listings
+		/// </summary>
+		/// <param name="skus"></param>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus, CancellationToken token );
 	}
 }

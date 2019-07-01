@@ -9,16 +9,35 @@ namespace EtsyAccessTests
 {
 	public class ItemsServiceTests : BaseTest
 	{
+		private const string Sku = "testsku1";
+
+		[ Test ]
+		public void GetListingsGetListingProductBySkuBySku()
+		{
+			var listing = this.EtsyItemsService.GetListingProductBySku( Sku, CancellationToken.None ).Result;
+
+			Assert.IsNotNull( listing );
+			Assert.AreEqual( Sku, listing.Sku );
+		}
+
+		[ Test ]
+		public void GetListingsBySkus()
+		{
+			var listing = this.EtsyItemsService.GetListingsBySkus( new List<string> { Sku }, CancellationToken.None ).Result.ToList();
+
+			Assert.IsTrue( listing.Any() );
+			Assert.AreEqual( Sku, listing[0].Sku[0] );
+		}
+
 		[ Test ]
 		public void UpdateSkuQuantity()
 		{
-			string sku = "testSku1";
 			int quantity = 12;
 
-			this.EtsyItemsService.UpdateSkuQuantity( sku, quantity, CancellationToken.None );
+			this.EtsyItemsService.UpdateSkuQuantity( Sku, quantity, CancellationToken.None );
 
 			// assert
-			var inventory = this.EtsyItemsService.GetListingProductBySku( sku, CancellationToken.None ).GetAwaiter().GetResult();
+			var inventory = this.EtsyItemsService.GetListingProductBySku( Sku, CancellationToken.None ).GetAwaiter().GetResult();
 
 			inventory.Should().NotBeNull();
 			inventory.Offerings.Should().NotBeNullOrEmpty();
@@ -28,14 +47,13 @@ namespace EtsyAccessTests
 		[ Test ]
 		public void UpdateSkuQuantityToZero()
 		{
-			string sku = "testSku1";
 			int quantity = 0;
 			const string message = "offering must have quantity greater than 0";
 
 			// assert
 			var etsyException = Assert.Throws< EtsyException >( () =>
 			{
-				this.EtsyItemsService.UpdateSkuQuantity( sku, quantity, CancellationToken.None );
+				this.EtsyItemsService.UpdateSkuQuantity( Sku, quantity, CancellationToken.None );
 			});
 
 			Assert.That( etsyException.ToString().Contains( message ) );

@@ -169,7 +169,7 @@ namespace EtsyAccess.Models
 		/// How much the item weighs
 		/// </summary>
 		[JsonProperty("item_weight")]
-		public int? ItemWeight { get; set; }
+		public float? ItemWeight { get; set; }
 		/// <summary>
 		/// The units used to represent the weight of this item
 		/// </summary>

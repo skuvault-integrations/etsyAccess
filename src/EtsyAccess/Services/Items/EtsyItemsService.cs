@@ -275,5 +275,74 @@ namespace EtsyAccess.Services.Items
 			}
 		}
 
+		/// <summary>
+		///	Returns listings in the draft state
+		/// </summary>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		public async Task< IEnumerable< Listing > > GetDraftListings( CancellationToken token )
+		{
+			var mark = Mark.CreateNew();
+			var url = String.Format( EtsyEndPoint.GetShopDraftListingsUrl, Config.ShopName );
+
+			try
+			{
+				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
+
+				var listings = await GetEntitiesAsync< Listing >( url, token, mark: mark ).ConfigureAwait( false );
+
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: listings.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
+
+				return listings.ToArray();
+
+			}
+			catch (Exception exception)
+			{
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+				EtsyLogger.LogTraceException( etsyException );
+				throw etsyException;
+			}
+		}
+
+		/// <summary>
+		///	Creates a new listing
+		/// </summary>
+		/// <param name="request"></param>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		public async Task CreateListing( PostListingRequest request, CancellationToken token )
+		{
+			var mark = Mark.CreateNew();
+			var url = String.Format( EtsyEndPoint.CreateListingUrl, Config.ShopName );
+
+			try
+			{
+				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
+
+				var payload = new Dictionary< string, string >
+				{
+					{ "quantity", request.Quantity.ToString() },
+					{ "title", request.Title },
+					{ "description", request.Description },
+					{ "price", request.Price.ToString() },
+					{ "who_made", request.WhoMade.ToString() },
+					{ "is_supply", request.IsSupply.ToString() },
+					{ "when_made", request.WhenMade },
+					{ "state", request.State.ToString() },
+					{ "shipping_template_id", request.ShippingTemplateId.ToString() }
+				};
+
+				await base.PostAsync( url, payload, token, mark ).ConfigureAwait( false );
+
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, methodResult: request.ToJson(), additionalInfo : this.AdditionalLogInfo() ) );
+
+			}
+			catch (Exception exception)
+			{
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+				EtsyLogger.LogTraceException( etsyException );
+				throw etsyException;
+			}
+		}
 	}
 }

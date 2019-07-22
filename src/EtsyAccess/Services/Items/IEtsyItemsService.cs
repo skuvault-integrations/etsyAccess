@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EtsyAccess.Models;
+using EtsyAccess.Models.Requests;
 
 namespace EtsyAccess.Services.Items
 {
@@ -49,5 +50,20 @@ namespace EtsyAccess.Services.Items
 		/// <param name="token"></param>
 		/// <returns></returns>
 		Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus, CancellationToken token );
+
+		/// <summary>
+		/// Creates a new listing
+		/// </summary>
+		/// <param name="listing"></param>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		Task CreateListing( PostListingRequest request, CancellationToken token );
+
+		/// <summary>
+		/// Returns listings in the draft state
+		/// </summary>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		Task< IEnumerable< Listing > > GetDraftListings( CancellationToken token );
 	}
 }

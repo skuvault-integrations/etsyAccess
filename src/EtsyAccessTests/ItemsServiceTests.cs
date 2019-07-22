@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using EtsyAccess.Exceptions;
+using EtsyAccess.Models;
+using EtsyAccess.Models.Requests;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -10,6 +12,43 @@ namespace EtsyAccessTests
 	public class ItemsServiceTests : BaseTest
 	{
 		private const string Sku = "testsku1";
+
+		[ Test ]
+		[ Ignore( "Creates listings in the real store" ) ]
+		public void GenerateListings()
+		{
+			var requests = new List< PostListingRequest >();
+			int listingsTotal = 200;
+			int i = 2;
+
+			while ( i < listingsTotal )
+			{
+				requests.Add( new PostListingRequest( quantity: i + 1,
+										  title: "testSku" + i.ToString(),
+										  description: "Test listing #" + i.ToString(),
+										  price: 1.0f,
+										  whoMade: WhoMadeEnum.i_did,
+										  isSupply: false,
+										  whenMade: "2010_2019",
+										  shippingTemplateId: 76153032027 )
+				{
+					State = StateEnum.draft // otherwise you may pay listing fees
+				});
+
+				i++;
+			}
+
+			foreach( var request in requests )
+				this.EtsyItemsService.CreateListing( request, CancellationToken.None ).GetAwaiter().GetResult();
+		}
+
+		[ Test ]
+		public void GetDraftListings()
+		{
+			var draftListings = this.EtsyItemsService.GetDraftListings( CancellationToken.None ).Result;
+
+			draftListings.Should().NotBeNullOrEmpty();
+		}
 
 		[ Test ]
 		public void GetListingsGetListingProductBySkuBySku()

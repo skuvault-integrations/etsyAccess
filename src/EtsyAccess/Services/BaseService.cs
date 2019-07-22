@@ -67,8 +67,31 @@ namespace EtsyAccess.Services
 		/// <param name="cancellationToken">Cancellation token for cancelling call to endpoint</param>
 		/// <param name="mark">Method tracing mark</param>
 		/// <returns></returns>
-		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, CancellationToken cancellationToken, List< T > result = null, Mark mark = null )
+		protected async Task< IEnumerable< T > > GetEntitiesAsync< T >( string url, CancellationToken cancellationToken, Mark mark = null )
 		{
+			var result = new List< T >();
+			var response = await GetEntitiesAsyncByOffset< T >( url, cancellationToken, 0, mark ).ConfigureAwait( false );
+
+			result.AddRange( response.Results );
+
+			// handle pagination
+			while ( response.Pagination.NextOffset != null )
+			{
+				int nextOffset = response.Pagination.NextOffset.Value;
+				response = await GetEntitiesAsyncByOffset< T >( url, cancellationToken, nextOffset, mark ).ConfigureAwait( false );
+				result.AddRange( response.Results );
+			}
+
+			return result;
+		}
+
+		private async Task< EtsyResponse< T > > GetEntitiesAsyncByOffset< T >( string url, CancellationToken cancellationToken, int offset = 0, Mark mark = null)
+		{
+			if ( offset > 0 )
+			{
+				url += String.Format( "&offset={0}", offset );
+			}
+
 			if ( cancellationToken.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
@@ -106,29 +129,8 @@ namespace EtsyAccess.Services
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
 						EtsyLogger.LogTraceException);
 			}).ConfigureAwait( false );
-			
-			var response = JsonConvert.DeserializeObject< EtsyResponse< T > >( responseContent );
 
-			if (result == null)
-				result = new List<T>();
-
-			result.AddRange( response.Results );
-
-			// handle pagination
-			if ( ( response.Pagination.NextPage != null )
-			     && ( response.Pagination.NextOffset != null ) )
-			{
-				int nextOffset = response.Pagination.NextPage.Value;
-				int currentOffset = response.Pagination.EffectiveOffset;
-
-				// remove current offset if exists
-				url = url.Replace( String.Format("&offset={0}", currentOffset), "" );
-				url += String.Format( "&offset={0}", nextOffset );
-
-				await GetEntitiesAsync( url, cancellationToken, result ).ConfigureAwait( false );
-			}
-
-			return result;
+			return JsonConvert.DeserializeObject< EtsyResponse< T > >( responseContent );
 		}
 
 		/// <summary>
@@ -193,7 +195,7 @@ namespace EtsyAccess.Services
 		/// <param name="token"></param>
 		/// <param name="mark"></param>
 		/// <returns></returns>
-		protected Task PutAsync(string url, Dictionary<string, string> payload, CancellationToken token, Mark mark = null)
+		protected Task PutAsync( string url, Dictionary< string, string > payload, CancellationToken token, Mark mark = null )
 		{
 			if ( token.IsCancellationRequested )
 			{
@@ -217,6 +219,57 @@ namespace EtsyAccess.Services
 							{
 								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
 								var response = await HttpClient.PutAsync( url, content, linkedTokenSource.Token ).ConfigureAwait( false );
+								var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+						
+								LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
+
+								ThrowIfError( response, responseStr );
+
+								return responseStr;
+							}
+						}, 
+						( timeSpan, retryCount ) =>
+						{
+							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
+						},
+						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
+						EtsyLogger.LogTraceException);
+			});
+		}
+
+		/// <summary>
+		///	Post data
+		/// </summary>
+		/// <param name="url"></param>
+		/// <param name="payload"></param>
+		/// <param name="token"></param>
+		/// <param name="mark"></param>
+		/// <returns></returns>
+		protected Task PostAsync( string url, Dictionary< string, string > payload, CancellationToken token, Mark mark = null )
+		{
+			if ( token.IsCancellationRequested )
+			{
+				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+				throw new EtsyException( string.Format( "{0}. Task was cancelled", exceptionDetails ) );
+			}
+
+			return Throttler.ExecuteAsync(() =>
+			{
+				return new ActionPolicy( Config.RetryAttempts )
+					.ExecuteAsync(async () =>
+						{
+							var content = new FormUrlEncodedContent( payload );
+
+							if ( !url.Contains( Config.ApiBaseUrl ) )
+								url = Config.ApiBaseUrl + url;
+
+							url = Authenticator.GetUriWithOAuthQueryParameters( url, "POST", payload );
+
+							using( var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource( token ) )
+							{
+								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
+								var response = await HttpClient.PostAsync( url, content, linkedTokenSource.Token ).ConfigureAwait( false );
 								var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 						
 								LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );

@@ -28,7 +28,7 @@ namespace EtsyAccess.Models
 		/// The numeric ID of the listing's category.
 		/// </summary>
 		[JsonProperty("category_id")]
-		public int CategoryId { get; set; }
+		public int? CategoryId { get; set; }
 		/// <summary>
 		/// The listing's title
 		/// </summary>
@@ -98,7 +98,7 @@ namespace EtsyAccess.Models
 		/// The seller taxonomy id of the listing
 		/// </summary>
 		[JsonProperty("taxonomy_id")]
-		public int TaxonomyId { get; set; }
+		public int? TaxonomyId { get; set; }
 		/// <summary>
 		/// Etsy's suggestion for the seller taxonomy_id for this listing.
 		/// Etsy makes this suggestion if the listing does not have a taxonomy_id chosen by the seller.
@@ -174,7 +174,7 @@ namespace EtsyAccess.Models
 		/// The units used to represent the weight of this item
 		/// </summary>
 		[JsonProperty("item_weight_unit")]
-		public ItemWeightUnit ItemWeightUnit { get; set; }
+		public ItemWeightUnit? ItemWeightUnit { get; set; }
 		/// <summary>
 		/// How long the item is
 		/// </summary>
@@ -194,7 +194,7 @@ namespace EtsyAccess.Models
 		/// The units used to represent the dimensions of this item
 		/// </summary>
 		[JsonProperty("item_dimensions_unit")]
-		public ItemDimensionsUnit ItemDimensionsUnit { get; set; }
+		public ItemDimensionsUnit? ItemDimensionsUnit { get; set; }
 		/// <summary>
 		/// Is this listing a private listing that is intended for a specific buyer and hidden from shop view.
 		/// </summary>

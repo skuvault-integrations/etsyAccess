@@ -100,11 +100,12 @@ namespace EtsyAccess.Services.Items
 
 			var url = String.Format( EtsyEndPoint.UpdateListingInventoryUrl, listing.Id );
 
+			Dictionary<string, string> payload;
 			try
 			{
 				EtsyLogger.LogStarted( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 
-				var payload = new Dictionary<string, string>
+				payload = new Dictionary<string, string>
 				{
 					{ "products", JsonConvert.SerializeObject( updateInventoryRequest.ToArray() ) }
 				};
@@ -117,14 +118,24 @@ namespace EtsyAccess.Services.Items
 
 				if (inventory.SkuOnProperty.Length != 0)
 					payload.Add("sku_on_property", string.Join( ",", inventory.SkuOnProperty ) );
-
-				await base.PutAsync( url, payload, token, mark ).ConfigureAwait( false );
-
-				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ) );
 			}
 			catch ( Exception exception )
 			{
 				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo() ), exception );
+				EtsyLogger.LogTraceException( etsyException );
+				throw etsyException;
+			}
+
+			var requestPayload = " Request Payload: " + payload.ToJson();
+			try
+			{
+				await base.PutAsync( url, payload, token, mark ).ConfigureAwait( false );
+
+				EtsyLogger.LogEnd( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo(), requestPayload: requestPayload ) );
+			}
+			catch ( Exception exception )
+			{
+				var etsyException = new EtsyException( this.CreateMethodCallInfo( url, mark, additionalInfo : this.AdditionalLogInfo(), requestPayload: requestPayload ), exception );
 				EtsyLogger.LogTraceException( etsyException );
 				throw etsyException;
 			}

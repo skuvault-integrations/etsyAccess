@@ -320,8 +320,9 @@ namespace EtsyAccess.Services
 		/// <param name="methodResult">Service endpoint raw result</param>
 		/// <param name="additionalInfo">Extra logging information</param>
 		/// <param name="memberName">Method name</param>
+		/// <param name="requestPayload">Payload for PUT calls and errors</param>
 		/// <returns></returns>
-		public string CreateMethodCallInfo( string url = "", Mark mark = null, string errors = "", string methodResult = "", string additionalInfo = "", [ CallerMemberName ] string memberName = "" )
+		public string CreateMethodCallInfo( string url = "", Mark mark = null, string errors = "", string methodResult = "", string additionalInfo = "", [ CallerMemberName ] string memberName = "", string requestPayload = "" )
 		{
 			string serviceEndPoint = null;
 			string requestParameters = null;
@@ -335,13 +336,14 @@ namespace EtsyAccess.Services
 			}
 
 			var str = string.Format(
-				"{{MethodName: {0}, Mark: '{1}', ServiceEndPoint: '{2}', {3} {4}{5}{6}}}",
+				"{{MethodName: {0}, Mark: '{1}', ServiceEndPoint: '{2}', {3} {4}{5}{6}{7}}",
 				memberName,
 				mark ?? Mark.Blank(),
 				string.IsNullOrWhiteSpace( serviceEndPoint ) ? string.Empty : serviceEndPoint,
 				string.IsNullOrWhiteSpace( requestParameters ) ? string.Empty : ", RequestParameters: " + requestParameters,
 				string.IsNullOrWhiteSpace( errors ) ? string.Empty : ", Errors:" + errors,
 				string.IsNullOrWhiteSpace( methodResult ) ? string.Empty : ", Result:" + methodResult,
+				string.IsNullOrWhiteSpace( requestPayload ) ? string.Empty : ", RequestPayload: " + requestPayload,
 				string.IsNullOrWhiteSpace( additionalInfo ) ? string.Empty : ", " + additionalInfo
 			);
 			return str;

@@ -126,7 +126,7 @@ namespace EtsyAccess.Services.Items
 				throw etsyException;
 			}
 
-			var requestPayload = " Request Payload: " + payload.ToJson();
+			var requestPayload = payload.ToJson();
 			try
 			{
 				await base.PutAsync( url, payload, token, mark ).ConfigureAwait( false );

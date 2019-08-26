@@ -336,7 +336,7 @@ namespace EtsyAccess.Services
 			}
 
 			var str = string.Format(
-				"{{MethodName: {0}, Mark: '{1}', ServiceEndPoint: '{2}', {3} {4}{5}{6}{7}}",
+				"{{MethodName: {0}, Mark: '{1}', ServiceEndPoint: '{2}', {3} {4}{5}{6}{7}}}",
 				memberName,
 				mark ?? Mark.Blank(),
 				string.IsNullOrWhiteSpace( serviceEndPoint ) ? string.Empty : serviceEndPoint,

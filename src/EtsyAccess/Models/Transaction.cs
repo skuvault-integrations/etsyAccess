@@ -79,7 +79,7 @@ namespace EtsyAccess.Models
 		/// The numeric ID of the primary listing image for this transaction
 		/// </summary>
 		[JsonProperty("image_listing_id")]
-		public int ImageListingId { get; set; }
+		public long ImageListingId { get; set; }
 		/// <summary>
 		/// The numeric ID for the receipt associated to this transaction
 		/// </summary>

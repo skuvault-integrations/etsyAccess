@@ -29,7 +29,7 @@ namespace EtsyAccess.Models.Throttling
 		/// <returns></returns>
 		public Task< TResult > ExecuteAsync< TResult >( Func< Task< TResult > > funcToThrottle, Action< TimeSpan, int > onRetryAttempt, Func< string > extraLogInfo, Action< Exception > onException )
 		{
-			return Policy.Handle< EtsyNetworkException >()
+			return Policy.Handle< EtsyTemporaryException >()
 				.WaitAndRetryAsync( _retryAttempts,
 					retryCount => TimeSpan.FromSeconds( GetDelayBeforeNextAttempt(retryCount) ),
 					( entityRaw, timeSpan, retryCount, context ) =>
@@ -52,8 +52,9 @@ namespace EtsyAccess.Models.Throttling
 							exceptionDetails = extraLogInfo();
 
 						if ( exception is HttpRequestException 
-							|| exception is EtsyInvalidSignatureException )
-							etsyException = new EtsyNetworkException( exceptionDetails, exception );
+							|| exception is EtsyInvalidSignatureException 
+							|| exception is EtsyBadGatewayException )
+							etsyException = new EtsyTemporaryException( exceptionDetails, exception );
 						else
 							etsyException = new EtsyException( exceptionDetails, exception );
 

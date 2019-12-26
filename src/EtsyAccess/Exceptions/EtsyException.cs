@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using EtsyAccess.Models.Throttling;
 
 namespace EtsyAccess.Exceptions
@@ -15,10 +13,10 @@ namespace EtsyAccess.Exceptions
 	///	Request to Etsy servers failed due to connection issues or specific server behavior.
 	///	Normally operation can be reattempted after receiving this exception
 	/// </summary>
-	public class EtsyNetworkException : EtsyException
+	public class EtsyTemporaryException : EtsyException
 	{
-		public EtsyNetworkException( string message, Exception exception ) : base( message, exception ) { }
-		public EtsyNetworkException( string message ) : this( message, null ) { }
+		public EtsyTemporaryException( string message, Exception exception ) : base( message, exception ) { }
+		public EtsyTemporaryException( string message ) : this( message, null ) { }
 	}
 
 	/// <summary>
@@ -58,5 +56,13 @@ namespace EtsyAccess.Exceptions
 		{
 			Limits = limits;
 		}
+	}
+
+	/// <summary>
+	///	502 Bad Gateway exception the Etsy api occasionally returns. Retry the request when this happens
+	/// </summary>
+	public class EtsyBadGatewayException : EtsyServerException
+	{
+		public EtsyBadGatewayException( string message ) : base( message, 502 ) { }
 	}
 }

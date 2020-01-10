@@ -1,8 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using EtsyAccess.Exceptions;
-using EtsyAccess.Models;
 using EtsyAccess.Models.Requests;
 using FluentAssertions;
 using NUnit.Framework;
@@ -126,6 +126,28 @@ namespace EtsyAccessTests
 			sku2Inventory.Should().NotBeNull();
 			sku2Inventory.Offerings.Should().NotBeNullOrEmpty();
 			sku2Inventory.Offerings.First().Quantity.Should().Be( sku2Quantity );
+		}
+
+		[ Test ]
+		// This will take awhile
+		public void UpdateSkusQuantities_Over30Variations_ShouldUpdateThem()
+		{
+			const string sku = "testsku1-";
+			const int minQuantity = 6;
+			var quantities = new Dictionary< string, int >();
+			var rand = new Random( DateTime.Now.Millisecond );
+			const int variationCount = 35;
+			for( var i = 1; i <= variationCount; i++ )
+			{
+				quantities.Add( sku + i, minQuantity + rand.Next( 1, 50 ) );
+			}
+			var cancellationTokenSource = new CancellationTokenSource();
+
+			this.EtsyItemsService.UpdateSkusQuantityAsync( quantities, cancellationTokenSource.Token ).GetAwaiter().GetResult();
+
+			var skuInventory = this.EtsyItemsService.GetListingProductBySku( sku, CancellationToken.None ).GetAwaiter().GetResult();
+			skuInventory.Offerings.Length.Should().BeGreaterOrEqualTo( variationCount );
+			skuInventory.Offerings.First().Quantity.Should().Be( quantities.First().Value );
 		}
 	}
 }

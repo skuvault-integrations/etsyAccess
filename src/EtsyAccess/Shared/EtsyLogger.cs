@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using EtsyAccess.Exceptions;
 using Netco.Logging;
 
 namespace EtsyAccess.Shared
@@ -26,7 +27,12 @@ namespace EtsyAccess.Shared
 
 		public static void LogTraceException( Exception exception )
 		{
-			Log().Trace( exception, "{channel} An exception occured. [ver:{version}]", CaMark, _versionInfo );
+			var errorResponseCode = string.Empty;
+			if( exception.InnerException != null && exception.InnerException.InnerException is EtsyServerException etsyServerExtension )
+			{
+				errorResponseCode = $"Error Http response code: {etsyServerExtension.Code} ";
+			}
+			Log().Trace( exception, "{channel} An exception occured. {errorResponseCode}[ver:{version}]", CaMark, errorResponseCode, _versionInfo );
 		}
 
 		public static void LogTraceStarted( string info )

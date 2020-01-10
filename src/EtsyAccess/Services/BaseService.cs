@@ -308,6 +308,9 @@ namespace EtsyAccess.Services
 			if ( message.IndexOf("exceeded your quota", StringComparison.InvariantCulture ) > -1 )
 				throw new EtsyApiLimitsExceeded( GetEtsyLimits( response ), message );
 
+			if ( responseStatusCode == HttpStatusCode.BadGateway )
+				throw new EtsyBadGatewayException( message );
+
 			throw new EtsyServerException( message, (int)responseStatusCode );
 		}
 

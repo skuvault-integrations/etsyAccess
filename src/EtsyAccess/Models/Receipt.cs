@@ -188,6 +188,8 @@ namespace EtsyAccess.Models
 		/// </summary>
 		[JsonProperty("adjusted_grandtotal")]
 		public float AdjustedGrandTotal { get; set; }
+		[JsonProperty("shipped_date")]
+		public long? ShippedDate { get; set; }
 		[JsonProperty("shipping_details")]
 		public ShippingDetails ShippingDetails { get; set; }
 		/// <summary>
@@ -219,27 +221,45 @@ namespace EtsyAccess.Models
 		/// <summary>
 		/// Shipping carrier name
 		/// </summary>
+		[JsonProperty("carrier_name")]
 		public string CarrierName { get; set; }
 		/// <summary>
 		/// Receipt shipping id used internally
 		/// </summary>
-		public int ReceiptShippingId { get; set; }
+		[JsonProperty("receipt_shipping_id")]
+		public long ReceiptShippingId { get; set; }
 		/// <summary>
 		/// Tracking code for carrier
 		/// </summary>
+		[JsonProperty("tracking_code")]
 		public string TrackingCode { get; set; }
 		/// <summary>
 		/// Tracking URL for carrier's website
 		/// </summary>
+		[JsonProperty("tracking_url")]
 		public string TrackingUrl { get; set; }
 		/// <summary>
 		/// Optional note sent to buyer
 		/// </summary>
+		[JsonProperty("buyer_note")]
 		public string BuyerNote { get; set; }
 		/// <summary>
 		/// Date the notification was sent
 		/// </summary>
-		public long NotificationDate { get; set; }
+		[JsonProperty("notification_date")]
+		public long? NotificationDate { get; set; }
+		[JsonProperty("mailing_date")]
+		public long MailingDate { get; set; }
+		[JsonProperty("major_tracking_state")]
+		public string MajorTrackingState { get; set; }
+		[JsonProperty("mail_class")]
+		public string MailClass { get; set; }
+		[JsonProperty("is_etsy_only_tracking")]
+		public bool IsEtsyOnlyTracking { get; set; }
+		[JsonProperty("current_step")]
+		public string CurrentStep { get; set; }
+		[JsonProperty("current_step_date")]
+		public long? CurrentStepDate { get; set; }
 	}
 
 	public class ShippingDetails

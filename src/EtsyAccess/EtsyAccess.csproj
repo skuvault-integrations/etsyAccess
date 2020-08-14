@@ -2,15 +2,16 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-    <Version>1.0.11</Version>
+    <Version>1.0.12</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company>SkuVault</Company>
     <Authors>SkuVault</Authors>
     <Description>Etsy webservices API wrapper</Description>
-    <Copyright>SkuVault © 2019</Copyright>
+    <Copyright>SkuVault © 2020</Copyright>
     <PackageProjectUrl>https://github.com/skuvault/etsyAccess/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/skuvault/etsyAccess/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/skuvault/etsyAccess/</RepositoryUrl>
+    <AssemblyVersion>1.0.12.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>

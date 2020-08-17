@@ -227,7 +227,7 @@ namespace EtsyAccess.Models
 		/// Receipt shipping id used internally
 		/// </summary>
 		[JsonProperty("receipt_shipping_id")]
-		public long ReceiptShippingId { get; set; }
+		public long? ReceiptShippingId { get; set; }
 		/// <summary>
 		/// Tracking code for carrier
 		/// </summary>

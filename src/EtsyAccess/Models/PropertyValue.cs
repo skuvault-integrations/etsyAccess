@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Linq;
 using Newtonsoft.Json;
 
 namespace EtsyAccess.Models
@@ -37,5 +35,11 @@ namespace EtsyAccess.Models
 		/// </summary>
 		[JsonProperty("values")]
 		public string[] Values { get; set; }
+
+		public PropertyValue DecodeValuesQuotesAndEscape()
+		{
+			this.Values = Values?.Select( v => v.Replace( "&quot;", "\"" ) ).ToArray();
+			return this;
+		}
 	}
 }

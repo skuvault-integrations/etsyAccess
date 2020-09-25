@@ -84,7 +84,7 @@ namespace EtsyAccess.Services.Items
 				{
 					ProductId = product.Id,
 					Sku = product.Sku,
-					PropertyValues = product.PropertyValues,
+					PropertyValues = DecodePropertyValuesWithQuotesAndEscape( product.PropertyValues ),
 					// currently each product has one offering
 					ListingOffering = new ListingOfferingRequest[]
 					{
@@ -139,6 +139,14 @@ namespace EtsyAccess.Services.Items
 				EtsyLogger.LogTraceException( etsyException );
 				throw etsyException;
 			}
+		}
+
+		private PropertyValue[] DecodePropertyValuesWithQuotesAndEscape( PropertyValue[] properties )
+		{
+			if ( properties == null && !properties.Any() )
+				return properties;
+
+			return properties.Select( p => p.DecodeValuesQuotesAndEscape() ).ToArray();
 		}
 
 		/// <summary>

@@ -59,44 +59,16 @@ namespace EtsyAccess.Services.Items
 		/// <param name="listing"></param>
 		/// <param name="inventory"></param>
 		/// <param name="sku"></param>
-		/// <param name="quantity"></param>
+		/// <param name="incomingQuantity"></param>
 		/// <returns></returns>
-		private async Task UpdateSkuQuantityAsync( Listing listing, ListingInventory inventory, string sku, int quantity, CancellationToken token )
+		private async Task UpdateSkuQuantityAsync( Listing listing, ListingInventory inventory, string sku, int incomingQuantity, CancellationToken token )
 		{
 			var mark = Mark.CreateNew();
 
-			var updateInventoryRequest = new List< UpdateInventoryRequest >();
+			var updateInventoryRequests = CreateUpdateInventoryRequests( sku, incomingQuantity, inventory.Products ).ToList();
 
-			// we should also add all product variations to request
-			foreach ( var product in inventory.Products )
-			{
-				var productOffering = product.Offerings.FirstOrDefault();
-
-				if ( productOffering == null )
-					continue;
-
-				int productQuantity = productOffering.Quantity;
-
-				if ( product.Sku != null && product.Sku.ToLower().Equals( sku.ToLower() ) )
-					productQuantity = quantity;
-
-				updateInventoryRequest.Add( new UpdateInventoryRequest()
-				{
-					ProductId = product.Id,
-					Sku = product.Sku,
-					PropertyValues = DecodePropertyValuesWithQuotesAndEscape( product.PropertyValues ),
-					// currently each product has one offering
-					ListingOffering = new ListingOfferingRequest[]
-					{
-						new ListingOfferingRequest()
-						{
-							Id = productOffering.Id,
-							Quantity = productQuantity,
-							Price = (decimal)productOffering.Price
-						}
-					}
-				});
-			}
+			if ( !updateInventoryRequests.Any() )
+				return;
 
 			var url = String.Format( EtsyEndPoint.UpdateListingInventoryUrl, listing.Id );
 
@@ -107,7 +79,7 @@ namespace EtsyAccess.Services.Items
 
 				payload = new Dictionary<string, string>
 				{
-					{ "products", JsonConvert.SerializeObject( updateInventoryRequest.ToArray() ) }
+					{ "products", JsonConvert.SerializeObject( updateInventoryRequests.ToArray() ) }
 				};
 
 				if (inventory.PriceOnProperty.Length != 0)
@@ -141,12 +113,55 @@ namespace EtsyAccess.Services.Items
 			}
 		}
 
-		private PropertyValue[] DecodePropertyValuesWithQuotesAndEscape( PropertyValue[] properties )
+		private static PropertyValue[] DecodePropertyValuesWithQuotesAndEscape( PropertyValue[] properties )
 		{
 			if ( properties == null && !properties.Any() )
 				return properties;
 
 			return properties.Select( p => p.DecodeValuesQuotesAndEscape() ).ToArray();
+		}
+		
+		public static IEnumerable< UpdateInventoryRequest > CreateUpdateInventoryRequests( string sku, int incomingQuantity, ListingProduct[] products )
+		{
+			var requests = new List< UpdateInventoryRequest >();
+			var hasQuantityChanged = false;
+
+			//Etsy requires we send ALL product variations, including the ones with unchanged quantity
+			foreach ( var product in products )
+			{
+				var productOffering = product.Offerings.FirstOrDefault();
+
+				if ( productOffering == null )
+					continue;
+
+				var productQuantity = productOffering.Quantity;
+
+				if ( product.Sku != null && product.Sku.ToLower().Equals( sku.ToLower() ) )
+				{
+					if ( productQuantity != incomingQuantity )
+						hasQuantityChanged = true;
+					productQuantity = incomingQuantity;
+				}
+
+				requests.Add( new UpdateInventoryRequest
+				{
+					ProductId = product.Id,
+					Sku = product.Sku,
+					PropertyValues = DecodePropertyValuesWithQuotesAndEscape( product.PropertyValues ),
+					// currently each product has one offering
+					ListingOffering = new []
+					{
+						new ListingOfferingRequest
+						{
+							Id = productOffering.Id,
+							Quantity = productQuantity,
+							Price = ( decimal ) productOffering.Price
+						}
+					}
+				});
+			}
+
+			return hasQuantityChanged ? requests : new List< UpdateInventoryRequest >();
 		}
 
 		/// <summary>

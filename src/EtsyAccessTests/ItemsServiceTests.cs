@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using EtsyAccess.Exceptions;
+using EtsyAccess.Models;
 using EtsyAccess.Models.Requests;
 using FluentAssertions;
 using NUnit.Framework;
@@ -24,13 +25,13 @@ namespace EtsyAccessTests
 			while ( i < listingsTotal )
 			{
 				requests.Add( new PostListingRequest( quantity: i + 1,
-										  title: "testSku" + i.ToString(),
-										  description: "Test listing #" + i.ToString(),
-										  price: 1.0f,
-										  whoMade: WhoMadeEnum.i_did,
-										  isSupply: false,
-										  whenMade: "2010_2019",
-										  shippingTemplateId: 76153032027 )
+					title: "testSku" + i.ToString(),
+					description: "Test listing #" + i.ToString(),
+					price: 1.0f,
+					whoMade: WhoMadeEnum.i_did,
+					isSupply: false,
+					whenMade: "2010_2019",
+					shippingTemplateId: 76153032027 )
 				{
 					State = StateEnum.draft // otherwise you may pay listing fees
 				});
@@ -164,6 +165,167 @@ namespace EtsyAccessTests
 			var skuInventory = this.EtsyItemsService.GetListingProductBySku( sku, CancellationToken.None ).GetAwaiter().GetResult();
 			skuInventory.Offerings.Length.Should().BeGreaterOrEqualTo( variationCount );
 			skuInventory.Offerings.First().Quantity.Should().Be( quantities.First().Value );
+		}
+
+	}
+
+	public class CreateUpdateInventoryRequestsTests
+	{
+		[ Test ]
+		public void GivenInventoryIsChanged_ThenInventoryIsInResult()
+		{
+			const string sku = "testSku1";
+			const int existingQuantity = 2;
+			const int differentIncomingQuantity = 1;
+			var price = new Money( 123, 100 );
+			const int productId = 1;
+			const int offeringId = 2;
+			var products = new []
+			{
+				new ListingProduct
+				{
+					Sku = sku,
+					Id = productId,
+					Offerings = new []
+					{
+						new ListingOffering
+						{
+							Id = offeringId,
+							Price = price,
+							Quantity = existingQuantity
+						}
+					},
+					PropertyValues = new PropertyValue[ 0 ]
+				}
+			};
+
+			var result = EtsyAccess.Services.Items.EtsyItemsService.CreateUpdateInventoryRequests( sku, differentIncomingQuantity, products );
+
+			var resultFirst = result.First();
+			resultFirst.Sku.Should().Be( sku );
+			resultFirst.ProductId.Should().Be( productId );
+			var resultFirstOffering = resultFirst.ListingOffering.First();
+			resultFirstOffering.Quantity.Should().Be( differentIncomingQuantity );
+			resultFirstOffering.Price.Should().Be( ( decimal )price );
+			resultFirstOffering.Id.Should().Be( offeringId );
+		}
+
+		[ Test ]
+		public void GivenInventoryIsChangedInSomeProducts_ThenResultContainsAllProducts()
+		{
+			const string sku = "testSku1";
+			const int existingQuantity = 2;
+			const int differentIncomingQuantity = 1;
+			var productWithChangedQuantity = new ListingProduct
+			{
+				Sku = sku,
+				Id = 1,
+				Offerings = new []
+				{
+					new ListingOffering
+					{
+						Id = 2,
+						Price = new Money( 123, 100 ),
+						Quantity = existingQuantity
+					}
+				},
+				PropertyValues = new PropertyValue[ 0 ]
+			};
+			const int existingQuantity2 = 22;
+			var anotherProductWithSameSku = new ListingProduct
+			{
+				Sku = sku,
+				Id = 1,
+				Offerings = new []
+				{
+					new ListingOffering
+					{
+						Id = 2,
+						Price = new Money( 123, 100 ),
+						Quantity = existingQuantity2
+					}
+				},
+				PropertyValues = new PropertyValue[ 0 ]
+			};
+			const int anotherProductQty = 5;
+			const string anotherSku = "testSkuAnother";
+			var productWithDiffSku = new ListingProduct
+			{
+				Sku = anotherSku,
+				Id = 4,
+				Offerings = new []
+				{
+					new ListingOffering
+					{
+						Id = 5,
+						Price = new Money( 234, 100 ),
+						Quantity = anotherProductQty
+					}
+				},
+				PropertyValues = new PropertyValue[ 0 ]
+			};
+			var products = new []
+			{
+				productWithChangedQuantity,
+				anotherProductWithSameSku,
+				productWithDiffSku
+			};
+
+			var result = EtsyAccess.Services.Items.EtsyItemsService.CreateUpdateInventoryRequests( sku, differentIncomingQuantity, products ).ToList();
+
+			result.Count.Should().Be( products.Length );
+			result[ 0 ].Sku.Should().Be( sku );
+			result[ 0 ].ListingOffering.First().Quantity.Should().Be( differentIncomingQuantity );
+			result[ 1 ].Sku.Should().Be( sku );
+			result[ 1 ].ListingOffering.First().Quantity.Should().Be( differentIncomingQuantity );
+			result[ 2 ].Sku.Should().Be( anotherSku );
+			result[ 2 ].ListingOffering.First().Quantity.Should().Be( anotherProductQty );
+		}
+
+		[ Test ]
+		public void GivenInventoryIsNotChanged_ThenNoInventoryIsInResult()
+		{
+			const string sku = "testSku1";
+			const int unchangedQuantity = 2;
+			var productWithUnchangedQuantity = new ListingProduct
+			{
+				Sku = sku,
+				Id = 1,
+				Offerings = new []
+				{
+					new ListingOffering
+					{
+						Id = 2,
+						Price = new Money( 123, 100 ),
+						Quantity = unchangedQuantity
+					}
+				},
+				PropertyValues = new PropertyValue[ 0 ]
+			};
+			var productWithDifferentSku = new ListingProduct
+			{
+				Sku = "testSkuAnother",
+				Id = 3,
+				Offerings = new []
+				{
+					new ListingOffering
+					{
+						Id = 4,
+						Price = new Money( 23, 100 ),
+						Quantity = 123
+					}
+				},
+				PropertyValues = new PropertyValue[ 0 ]
+			};
+			var products = new []
+			{
+				productWithUnchangedQuantity,
+				productWithDifferentSku
+			};
+
+			var result = EtsyAccess.Services.Items.EtsyItemsService.CreateUpdateInventoryRequests( sku, unchangedQuantity, products );
+
+			result.Should().BeEmpty();
 		}
 	}
 }

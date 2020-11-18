@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace EtsyAccess.Models
 {
@@ -14,7 +11,7 @@ namespace EtsyAccess.Models
 		/// The numeric ID for this transaction
 		/// </summary>
 		[JsonProperty("transaction_id")]
-		public int Id { get; set; }
+		public long Id { get; set; }
 		/// <summary>
 		/// The title of the listing for this transaction
 		/// </summary>
@@ -84,7 +81,7 @@ namespace EtsyAccess.Models
 		/// The numeric ID for the receipt associated to this transaction
 		/// </summary>
 		[JsonProperty("receipt_id")]
-		public int ReceiptId { get; set; }
+		public long ReceiptId { get; set; }
 		/// <summary>
 		/// The shipping cost for this transaction
 		/// </summary>
@@ -104,7 +101,7 @@ namespace EtsyAccess.Models
 		/// The numeric ID for this listing associated to this transaction
 		/// </summary>
 		[JsonProperty("listing_id")]
-		public int ListingId { get; set; }
+		public long ListingId { get; set; }
 		/// <summary>
 		/// True if this transaction was created for an in-person quick sale.
 		/// </summary>
@@ -114,12 +111,12 @@ namespace EtsyAccess.Models
 		/// The numeric ID of seller's feedback
 		/// </summary>
 		[JsonProperty("seller_feedback_id")]
-		public int? SellerFeedbackId { get; set; }
+		public long? SellerFeedbackId { get; set; }
 		/// <summary>
 		/// The numeric ID for the buyer's feedback
 		/// </summary>
 		[JsonProperty("buyer_feedback_id")]
-		public int? BuyerFeedbackId { get; set; }
+		public long? BuyerFeedbackId { get; set; }
 		/// <summary>
 		/// The type of transaction, usually "listing"
 		/// </summary>

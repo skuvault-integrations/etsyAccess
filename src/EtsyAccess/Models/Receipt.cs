@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using EtsyAccess.Shared;
 using Newtonsoft.Json;
 
@@ -15,7 +13,7 @@ namespace EtsyAccess.Models
 		/// The receipt's numeric ID
 		/// </summary>
 		[JsonProperty("receipt_id")]
-		public int Id { get; set; }
+		public long Id { get; set; }
 		/// <summary>
 		/// The enum of the order type this receipt is associated with.
 		/// </summary>
@@ -25,7 +23,7 @@ namespace EtsyAccess.Models
 		/// The numeric ID of the order this receipt is associated with.
 		/// </summary>
 		[JsonProperty("order_id")]
-		public int OrderId { get; set; }
+		public long OrderId { get; set; }
 		/// <summary>
 		/// Creation time, in epoch seconds.
 		/// </summary>

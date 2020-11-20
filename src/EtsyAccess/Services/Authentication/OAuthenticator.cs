@@ -181,12 +181,15 @@ namespace EtsyAccess.Services.Authentication
 		{
 			string unreservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
 			StringBuilder result = new StringBuilder();
+			// percent encoding string should be produced by reading byte-by-byte to properly encode UTF-8 chars
+			var rawData = Encoding.UTF8.GetBytes( data );
 
-			foreach ( char symbol in data ) {
+			foreach ( byte symbolByte in rawData ) {
+				var symbol = (char)symbolByte;
 				if ( unreservedChars.IndexOf(symbol) != -1 ) {
 					result.Append( symbol );
 				} else {
-					result.Append('%' + String.Format("{0:X2}", (int)symbol));
+					result.Append('%' + String.Format("{0:X2}", (int)symbolByte));
 				}
 			}
 

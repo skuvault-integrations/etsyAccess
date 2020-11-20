@@ -13,7 +13,7 @@ namespace EtsyAccess.Models
 		/// The listing's numeric ID
 		/// </summary>
 		[JsonProperty("listing_id")]
-		public int Id { get; set; }
+		public long Id { get; set; }
 		/// <summary>
 		/// One of active, removed, sold_out, expired, alchemy, edit, create, private, or unavailable.
 		/// </summary>

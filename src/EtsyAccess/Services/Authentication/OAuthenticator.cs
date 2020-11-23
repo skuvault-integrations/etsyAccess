@@ -123,10 +123,10 @@ namespace EtsyAccess.Services.Authentication
 		{
 			string signature = null;
 
-			string urlEncoded = EscapeUriData( baseUrl );
-			string encodedParameters = EscapeUriData( string.Join( "&",
+			string urlEncoded = PercentEncodeData( baseUrl );
+			string encodedParameters = PercentEncodeData( string.Join( "&",
 				requestParameters.OrderBy( kv => kv.Key ).Select( item =>
-					($"{ EscapeUriData( item.Key ) }={ EscapeUriData( item.Value ) }") ) ) );
+					($"{ PercentEncodeData( item.Key ) }={ PercentEncodeData( item.Value ) }") ) ) );
 			
 			string baseString = $"{ urlMethod.ToUpper() }&{ urlEncoded }&{ encodedParameters }";
 
@@ -177,7 +177,7 @@ namespace EtsyAccess.Services.Authentication
 		/// </summary>
 		/// <param name="data"></param>
 		/// <returns></returns>
-		private string EscapeUriData( string data )
+		public string PercentEncodeData( string data )
 		{
 			string unreservedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~";
 			StringBuilder result = new StringBuilder();

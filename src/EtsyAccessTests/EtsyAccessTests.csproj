@@ -91,6 +91,7 @@
     <Compile Include="CancellationTokenTests.cs" />
     <Compile Include="ItemsServiceTests.cs" />
     <Compile Include="ModelsTests.cs" />
+    <Compile Include="OAuthTests.cs" />
     <Compile Include="OrdersServiceTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SharedMiscTests.cs" />

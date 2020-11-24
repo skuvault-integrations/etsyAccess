@@ -12,7 +12,7 @@ namespace EtsyAccessTests
 {
 	public class ItemsServiceTests : BaseTest
 	{
-		private const string Sku = "testsku1";
+		private const string Sku = "testsku2";
 
 		[ Test ]
 		[ Ignore( "Creates listings in the real store" ) ]

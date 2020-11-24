@@ -48,7 +48,7 @@ namespace EtsyAccess.Services.Items
 				return;
 
 			// get listing inventory
-			var listingInventory = await GetListingInventoryBySku( listing, sku, token ).ConfigureAwait( false );
+			var listingInventory = await GetListingInventoryAsync( listing, token ).ConfigureAwait( false );
 						
 			await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity, token ).ConfigureAwait( false );
 		}
@@ -61,9 +61,10 @@ namespace EtsyAccess.Services.Items
 		/// <param name="sku"></param>
 		/// <param name="incomingQuantity"></param>
 		/// <returns></returns>
-		private async Task UpdateSkuQuantityAsync( Listing listing, ListingInventory inventory, string sku, int incomingQuantity, CancellationToken token )
+		private async Task UpdateSkuQuantityAsync( Listing listing, ListingInventory inventory, string sku, int incomingQuantity, CancellationToken token, Mark mark = null )
 		{
-			var mark = Mark.CreateNew();
+			if ( mark == null )
+				mark = Mark.CreateNew();
 
 			var updateInventoryRequests = CreateUpdateInventoryRequests( sku, incomingQuantity, inventory.Products ).ToList();
 
@@ -170,11 +171,11 @@ namespace EtsyAccess.Services.Items
 		/// <param name="skusQuantities"></param>
 		/// <param name="token"></param>
 		/// <returns></returns>
-		public async Task UpdateSkusQuantityAsync( Dictionary<string, int> skusQuantities, CancellationToken token )
+		public async Task UpdateSkusQuantityAsync( Dictionary< string, int > skusQuantities, CancellationToken token, Mark mark )
 		{
 			Condition.Requires( skusQuantities ).IsNotEmpty();
 
-			var listings = await GetListingsBySkus( skusQuantities.Keys, token ).ConfigureAwait( false );
+			var listings = await GetListingsBySkus( skusQuantities.Keys, token, mark ).ConfigureAwait( false );
 
 			foreach ( var skuQuantity in skusQuantities )
 			{
@@ -186,10 +187,10 @@ namespace EtsyAccess.Services.Items
 				if ( listing == null )
 					continue;
 
-				var listingInventory = await GetListingInventoryBySku( listing, sku, token ).ConfigureAwait( false );
+				var listingInventory = await GetListingInventoryAsync( listing, token, mark ).ConfigureAwait( false );
 
 				if ( listingInventory != null )
-					await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity, token );
+					await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity, token, mark );
 			}
 		}
 
@@ -232,22 +233,24 @@ namespace EtsyAccess.Services.Items
 			
 			// get listing's product inventory
 			if (listing != null)
-				listingInventory = await GetListingInventoryBySku( listing, sku, token );
+				listingInventory = await GetListingInventoryAsync( listing, token );
 
 			return listingInventory;
 		}
 
-		
-		/// <summary>
-		///	Returns listing's products
-		/// </summary>
-		/// <param name="listing"></param>
-		/// <param name="sku"></param>
-		/// <param name="token"></param>
-		/// <returns></returns>
-		public async Task< ListingInventory > GetListingInventoryBySku( Listing listing, string sku, CancellationToken token )
+
+		///  <summary>
+		/// 	Returns listing's products
+		///  </summary>
+		///  <param name="listing"></param>
+		///  <param name="token"></param>
+		///  <param name="mark"></param>
+		///  <returns></returns>
+		public async Task< ListingInventory > GetListingInventoryAsync( Listing listing, CancellationToken token, Mark mark = null )
 		{
-			var mark = Mark.CreateNew();
+			if ( mark == null )
+				mark = Mark.CreateNew();
+
 			string url = String.Format( EtsyEndPoint.GetListingInventoryUrl, listing.Id );
 
 			try
@@ -279,15 +282,18 @@ namespace EtsyAccess.Services.Items
 			return GetListingsBySkus( new string[] { sku }, token );
 		}
 
-		/// <summary>
-		///	Returns listings with specified skus
-		/// </summary>
-		/// <param name="skus"></param>
-		/// <param name="token"></param>
-		/// <returns></returns>
-		public async Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus, CancellationToken token )
+		///  <summary>
+		/// 	Returns listings with specified skus
+		///  </summary>
+		///  <param name="skus"></param>
+		///  <param name="token"></param>
+		///  <param name="mark"></param>
+		///  <returns></returns>
+		public async Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus, CancellationToken token, Mark mark = null )
 		{
-			var mark = Mark.CreateNew();
+			if ( mark == null )
+				mark = Mark.CreateNew();
+
 			var url = String.Format( EtsyEndPoint.GetShopActiveListingsUrl, Config.ShopName );
 
 			try

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EtsyAccess.Models;
 using EtsyAccess.Models.Requests;
+using EtsyAccess.Shared;
 
 namespace EtsyAccess.Services.Items
 {
@@ -27,13 +28,14 @@ namespace EtsyAccess.Services.Items
 		/// <returns></returns>
 		Task UpdateSkuQuantityAsync( string sku, int quantity, CancellationToken token );
 
-		/// <summary>
-		///	Updates skus quantities asynchronously
-		/// </summary>
-		/// <param name="skusQuantities">new quantity for each sku</param>
-		/// <param name="token"></param>
-		/// <returns></returns>
-		Task UpdateSkusQuantityAsync( Dictionary< string, int > skusQuantities, CancellationToken token );
+		///  <summary>
+		/// 	Updates skus quantities asynchronously
+		///  </summary>
+		///  <param name="skusQuantities">new quantity for each sku</param>
+		///  <param name="token"></param>
+		///  <param name="mark">mark for log correlation</param>
+		///  <returns></returns>
+		Task UpdateSkusQuantityAsync( Dictionary< string, int > skusQuantities, CancellationToken token, Mark mark = null );
 
 		/// <summary>
 		/// Returns product inventory
@@ -48,8 +50,9 @@ namespace EtsyAccess.Services.Items
 		/// </summary>
 		/// <param name="skus"></param>
 		/// <param name="token"></param>
+		/// <param name="mark">Mark for log correlation</param>
 		/// <returns></returns>
-		Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus, CancellationToken token );
+		Task< IEnumerable< Listing > > GetListingsBySkus( IEnumerable< string > skus, CancellationToken token, Mark mark = null );
 
 		/// <summary>
 		/// Creates a new listing

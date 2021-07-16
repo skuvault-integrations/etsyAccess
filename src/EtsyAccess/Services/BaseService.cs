@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
@@ -208,7 +209,8 @@ namespace EtsyAccess.Services
 				return new ActionPolicy( Config.RetryAttempts )
 					.ExecuteAsync(async () =>
 						{
-							var content = new FormUrlEncodedContent( payload );
+							var stringPayload = JsonConvert.SerializeObject( payload );
+							var content = new StringContent( stringPayload, Encoding.UTF8, "application/json" );
 
 							if ( !url.Contains( Config.ApiBaseUrl ) )
 								url = Config.ApiBaseUrl + url;

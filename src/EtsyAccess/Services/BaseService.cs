@@ -96,9 +96,7 @@ namespace EtsyAccess.Services
 			if ( cancellationToken.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-				
-				//See CancelAfter() for timeout
-				throw new EtsyException( string.Format( "{0}. Task was cancelled or timed out (timeout limit - {1}ms)", exceptionDetails, Config.RequestTimeoutMs ) );
+				throw new EtsyException( string.Format( "{0}. Task was cancelled", exceptionDetails ) );
 			}
 
 			var responseContent = await Throttler.ExecuteAsync(() =>
@@ -149,9 +147,7 @@ namespace EtsyAccess.Services
 			if ( cancellationToken.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-				
-				//See CancelAfter() for timeout
-				throw new EtsyException( string.Format( "{0}. Task was cancelled or timed out (timeout limit - {1}ms)", exceptionDetails, Config.RequestTimeoutMs ) );
+				throw new EtsyException( string.Format( "{0}. Task was cancelled", exceptionDetails ) );
 			}
 
 			var responseContent = await Throttler.ExecuteAsync(() =>
@@ -205,9 +201,7 @@ namespace EtsyAccess.Services
 			if ( token.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-
-				//See CancelAfter() for timeout
-				throw new EtsyException( string.Format( "{0}. Task was cancelled or timed out (timeout limit - {1}ms)", exceptionDetails, Config.RequestTimeoutMs ) );
+				throw new EtsyException( string.Format( "{0}. Task was cancelled", exceptionDetails ) );
 			}
 
 			return Throttler.ExecuteAsync(() =>
@@ -259,9 +253,7 @@ namespace EtsyAccess.Services
 			if ( token.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-				
-				//See CancelAfter() for timeout
-				throw new EtsyException( string.Format( "{0}. Task was cancelled or timed out (timeout limit - {1}ms)", exceptionDetails, Config.RequestTimeoutMs ) );
+				throw new EtsyException( string.Format( "{0}. Task was cancelled", exceptionDetails ) );
 			}
 
 			return Throttler.ExecuteAsync(() =>

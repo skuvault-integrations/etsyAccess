@@ -35,5 +35,3 @@ build
 log
 *Credentials*.csv
 
-#Rider
-src/.idea/

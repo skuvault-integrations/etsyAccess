@@ -48,7 +48,7 @@ namespace EtsyAccess.Models.Configuration
 		/// </summary>
 		public readonly int ThrottlingMaxRetryAttempts = 10;
 
-		public EtsyConfig( string shopName, string token, string tokenSecret, int requestTimeoutMs = 5 * 60 * 1000 ) // Default timeout 5min. 
+		public EtsyConfig( string shopName, string token, string tokenSecret, int requestTimeoutMs = 30 * 1000 )
 		{
 			Condition.Requires( shopName ).IsNotNullOrEmpty();
 			Condition.Requires( token ).IsNotNullOrEmpty();

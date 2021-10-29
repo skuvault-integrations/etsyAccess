@@ -66,11 +66,10 @@ namespace EtsyAccessTests
 			var listing = this.EtsyItemsService.GetListingsBySkus( new List<string> { Sku }, CancellationToken.None ).Result.ToList();
 
 			Assert.IsTrue( listing.Any() );
-			Assert.Contains( Sku, listing[0].Sku );
+			Assert.AreEqual( Sku, listing[0].Sku[0] );
 		}
 
 		[ Test ]
-		[ Explicit ]
 		public void UpdateSkuQuantity()
 		{
 			int quantity = 12;
@@ -86,7 +85,6 @@ namespace EtsyAccessTests
 		}
 
 		[ Test ]
-		[ Explicit ]
 		public void UpdateSkuQuantityToZero()
 		{
 			int quantity = 0;
@@ -102,7 +100,6 @@ namespace EtsyAccessTests
 		}
 
 		[ Test ]
-		[ Explicit ]
 		public void UpdateSkuQuantityWithQuoteInTheOptionName()
 		{
 			int quantity = 2;
@@ -119,7 +116,6 @@ namespace EtsyAccessTests
 		}
 
 		[ Test ]
-		[ Explicit ]
 		public void UpdateSkusQuantities()
 		{
 			string sku = "testSku1";
@@ -150,7 +146,6 @@ namespace EtsyAccessTests
 		}
 
 		[ Test ]
-		[ Explicit ]
 		// This will take awhile
 		public void UpdateSkusQuantities_Over30Variations_ShouldUpdateThem()
 		{

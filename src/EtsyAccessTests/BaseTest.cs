@@ -53,7 +53,7 @@ namespace EtsyAccessTests
 		{
 			string path = new Uri( Path.GetDirectoryName( Assembly.GetExecutingAssembly().CodeBase ) ).LocalPath;
 
-			using( var reader = new StreamReader( path + @"\..\..\credentials.csv" ) )
+			using( var reader = new StreamReader( path + @"\..\..\files\credentials.csv" ) )
 			{
 				return new TestCredentials()
 				{

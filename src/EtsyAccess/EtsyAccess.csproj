@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
-    <Version>1.2.1</Version>
+    <Version>1.7.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company>SkuVault</Company>
     <Authors>SkuVault</Authors>
@@ -11,7 +11,7 @@
     <PackageProjectUrl>https://github.com/skuvault/etsyAccess/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/skuvault/etsyAccess/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/skuvault/etsyAccess/</RepositoryUrl>
-    <AssemblyVersion>1.2.2.0</AssemblyVersion>
+    <AssemblyVersion>1.7.2.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>

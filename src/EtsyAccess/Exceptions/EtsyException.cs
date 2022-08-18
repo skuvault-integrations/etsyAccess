@@ -67,7 +67,7 @@ namespace EtsyAccess.Exceptions
 	}
 
 	/// <summary>
-	///	502 Bad Gateway exception the Etsy api occasionally returns. Retry the request when this happens
+	///	409 Conflict exception the Etsy api occasionally returns. Retry the request when this happens
 	/// </summary>
 	public class EtsyConflictException : EtsyServerException
 	{

@@ -67,7 +67,7 @@ namespace EtsyAccess.Shared
 
 		public static void LogTraceRetryStarted( int delaySeconds, int attempt, string info )
 		{
-			info = String.Format( "{0}, Delay: {0}s, Attempt: {1} ", info, delaySeconds, attempt );
+			info = $"{info}, Delay: {delaySeconds}s, Attempt: {attempt} ";
 			TraceLog( "Trace info", info );
 		}
 

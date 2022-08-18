@@ -20,13 +20,13 @@ namespace EtsyAccess.Services
 {
 	public class BaseService
 	{
-		protected readonly string ApplicationKey;
-		protected readonly string SharedSecret;
+		private readonly string ApplicationKey;
+		private readonly string SharedSecret;
 		protected readonly EtsyConfig Config;
 		protected readonly HttpClient HttpClient;
 		protected readonly OAuthenticator Authenticator;
 		private Func< string > _additionalLogInfo;
-		public readonly Throttler Throttler;
+		private readonly Throttler Throttler;
 
 		/// <summary>
 		///	Extra logging information
@@ -51,7 +51,8 @@ namespace EtsyAccess.Services
 
 			HttpClient = new HttpClient()
 			{
-				BaseAddress = new Uri( Config.ApiBaseUrl ) 
+				BaseAddress = new Uri( Config.ApiBaseUrl ),
+				Timeout = TimeSpan.FromMilliseconds( config.RequestTimeoutMs )
 			};
 
 			SetSslSettings();
@@ -64,7 +65,6 @@ namespace EtsyAccess.Services
 		/// </summary>
 		/// <typeparam name="T">Entities that should be received from service endpoint</typeparam>
 		/// <param name="url">Url to endpoint</param>
-		/// <param name="result"></param>
 		/// <param name="cancellationToken">Cancellation token for cancelling call to endpoint</param>
 		/// <param name="mark">Method tracing mark</param>
 		/// <returns></returns>
@@ -78,7 +78,7 @@ namespace EtsyAccess.Services
 			// handle pagination
 			while ( response.Pagination.NextOffset != null )
 			{
-				int nextOffset = response.Pagination.NextOffset.Value;
+				var nextOffset = response.Pagination.NextOffset.Value;
 				response = await GetEntitiesAsyncByOffset< T >( url, cancellationToken, nextOffset, mark ).ConfigureAwait( false );
 				result.AddRange( response.Results );
 			}
@@ -90,15 +90,13 @@ namespace EtsyAccess.Services
 		{
 			if ( offset > 0 )
 			{
-				url += String.Format( "&offset={0}", offset );
+				url += $"&offset={offset}";
 			}
 
 			if ( cancellationToken.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-				
-				//See CancelAfter() for timeout
-				throw new EtsyException( string.Format( "{0}. Task was cancelled or timed out (timeout limit - {1}ms)", exceptionDetails, Config.RequestTimeoutMs ) );
+				throw new EtsyException( $"{exceptionDetails}. Task was cancelled" );
 			}
 
 			var responseContent = await Throttler.ExecuteAsync(() =>
@@ -111,26 +109,22 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-							using( var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource( cancellationToken ) )
-							{
-								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
-								var httpResponse = await HttpClient.GetAsync( url, linkedTokenSource.Token ).ConfigureAwait( false );
-								string content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
+							var httpResponse = await HttpClient.GetAsync( url, cancellationToken ).ConfigureAwait( false );
+							var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
-								LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
+							LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
 
-								ThrowIfError( httpResponse, content );
+							ThrowIfError( httpResponse, content );
 
-								return content;
-							}
+							return content;
 						}, 
 						( timeSpan, retryCount ) =>
 						{
-							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+							var retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
-						EtsyLogger.LogTraceException);
+						cancellationToken );
 			}).ConfigureAwait( false );
 
 			return JsonConvert.DeserializeObject< EtsyResponse< T > >( responseContent );
@@ -149,9 +143,7 @@ namespace EtsyAccess.Services
 			if ( cancellationToken.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-				
-				//See CancelAfter() for timeout
-				throw new EtsyException( string.Format( "{0}. Task was cancelled or timed out (timeout limit - {1}ms)", exceptionDetails, Config.RequestTimeoutMs ) );
+				throw new EtsyException( $"{exceptionDetails}. Task was cancelled" );
 			}
 
 			var responseContent = await Throttler.ExecuteAsync(() =>
@@ -164,27 +156,22 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url );
 
-							using( var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource( cancellationToken ) )
-							{
-								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
+							var httpResponse = await HttpClient.GetAsync( url, cancellationToken ).ConfigureAwait( false );
+							var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
 
-								var httpResponse = await HttpClient.GetAsync( url, linkedTokenSource.Token ).ConfigureAwait( false );
-								var content = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait( false );
+							LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
 
-								LogRateLimits( httpResponse, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() )  );
+							ThrowIfError( httpResponse, content );
 
-								ThrowIfError( httpResponse, content );
-
-								return content;
-							}
+							return content;
 						}, 
 						( timeSpan, retryCount ) =>
 						{
-							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+							var retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
-						EtsyLogger.LogTraceException);
+						cancellationToken );
 			}).ConfigureAwait( false );
 
 			var response = JsonConvert.DeserializeObject< EtsyResponseSingleEntity< T > >( responseContent );
@@ -205,9 +192,7 @@ namespace EtsyAccess.Services
 			if ( token.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-
-				//See CancelAfter() for timeout
-				throw new EtsyException( string.Format( "{0}. Task was cancelled or timed out (timeout limit - {1}ms)", exceptionDetails, Config.RequestTimeoutMs ) );
+				throw new EtsyException( $"{exceptionDetails}. Task was cancelled" );
 			}
 
 			return Throttler.ExecuteAsync(() =>
@@ -223,26 +208,22 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url, "PUT", payload );
 
-							using( var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource( token ) )
-							{
-								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
-								var response = await HttpClient.PutAsync( url, content, linkedTokenSource.Token ).ConfigureAwait( false );
-								var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+							var response = await HttpClient.PutAsync( url, content, token ).ConfigureAwait( false );
+							var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 						
-								LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
+							LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
 
-								ThrowIfError( response, responseStr );
+							ThrowIfError( response, responseStr );
 
-								return responseStr;
-							}
+							return responseStr;
 						}, 
 						( timeSpan, retryCount ) =>
 						{
-							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+							var retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
-						EtsyLogger.LogTraceException);
+						token );
 			});
 		}
 
@@ -259,9 +240,7 @@ namespace EtsyAccess.Services
 			if ( token.IsCancellationRequested )
 			{
 				var exceptionDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
-				
-				//See CancelAfter() for timeout
-				throw new EtsyException( string.Format( "{0}. Task was cancelled or timed out (timeout limit - {1}ms)", exceptionDetails, Config.RequestTimeoutMs ) );
+				throw new EtsyException( $"{exceptionDetails}. Task was cancelled" );
 			}
 
 			return Throttler.ExecuteAsync(() =>
@@ -276,26 +255,22 @@ namespace EtsyAccess.Services
 
 							url = Authenticator.GetUriWithOAuthQueryParameters( url, "POST", payload );
 
-							using( var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource( token ) )
-							{
-								linkedTokenSource.CancelAfter( Config.RequestTimeoutMs );
-								var response = await HttpClient.PostAsync( url, content, linkedTokenSource.Token ).ConfigureAwait( false );
-								var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+							var response = await HttpClient.PostAsync( url, content, token ).ConfigureAwait( false );
+							var responseStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 						
-								LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
+							LogRateLimits( response, CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ) );
 
-								ThrowIfError( response, responseStr );
+							ThrowIfError( response, responseStr );
 
-								return responseStr;
-							}
+							return responseStr;
 						}, 
 						( timeSpan, retryCount ) =>
 						{
-							string retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
+							var retryDetails = CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() );
 							EtsyLogger.LogTraceRetryStarted( timeSpan.Seconds, retryCount, retryDetails );
 						},
 						() => CreateMethodCallInfo( url, mark, additionalInfo: this.AdditionalLogInfo() ),
-						EtsyLogger.LogTraceException);
+						token );
 			});
 		}
 
@@ -306,10 +281,8 @@ namespace EtsyAccess.Services
 		/// <param name="message">response message</param>
 		public void ThrowIfError( HttpResponseMessage response, string message )
 		{
-			HttpStatusCode responseStatusCode = response.StatusCode;
-
-			if ( responseStatusCode == HttpStatusCode.OK
-					|| responseStatusCode == HttpStatusCode.Created )
+			var responseStatusCode = response.StatusCode;
+			if ( response.IsSuccessStatusCode )
 				return;
 
 			if ( message.IndexOf("signature_invalid", StringComparison.InvariantCulture ) > -1 )
@@ -320,6 +293,9 @@ namespace EtsyAccess.Services
 
 			if ( responseStatusCode == HttpStatusCode.BadGateway )
 				throw new EtsyBadGatewayException( message );
+
+			if ( responseStatusCode == HttpStatusCode.Conflict )
+				throw new EtsyConflictException( message );
 
 			throw new EtsyServerException( message, (int)responseStatusCode );
 		}

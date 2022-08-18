@@ -65,4 +65,12 @@ namespace EtsyAccess.Exceptions
 	{
 		public EtsyBadGatewayException( string message ) : base( message, 502 ) { }
 	}
+
+	/// <summary>
+	///	502 Bad Gateway exception the Etsy api occasionally returns. Retry the request when this happens
+	/// </summary>
+	public class EtsyConflictException : EtsyServerException
+	{
+		public EtsyConflictException( string message ) : base( message, 409 ) { }
+	}
 }

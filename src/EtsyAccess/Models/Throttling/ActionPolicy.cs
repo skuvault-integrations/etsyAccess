@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using CuttingEdge.Conditions;
 using EtsyAccess.Exceptions;
@@ -27,12 +28,12 @@ namespace EtsyAccess.Models.Throttling
 		/// <param name="extraLogInfo"></param>
 		/// <param name="onException"></param>
 		/// <returns></returns>
-		public Task< TResult > ExecuteAsync< TResult >( Func< Task< TResult > > funcToThrottle, Action< TimeSpan, int > onRetryAttempt, Func< string > extraLogInfo, Action< Exception > onException )
+		public Task< TResult > ExecuteAsync< TResult >( Func< Task< TResult > > funcToThrottle, Action< TimeSpan, int > onRetryAttempt, Func< string > extraLogInfo, CancellationToken cancellationToken )
 		{
 			return Policy.Handle< EtsyTemporaryException >()
 				.WaitAndRetryAsync( _retryAttempts,
 					retryCount => TimeSpan.FromSeconds( GetDelayBeforeNextAttempt(retryCount) ),
-					( entityRaw, timeSpan, retryCount, context ) =>
+					( ex, timeSpan, retryCount, context ) =>
 					{
 						onRetryAttempt?.Invoke( timeSpan, retryCount );
 					})
@@ -41,6 +42,18 @@ namespace EtsyAccess.Models.Throttling
 					try
 					{
 						return await funcToThrottle().ConfigureAwait( false );
+					}
+					catch ( TaskCanceledException ex )
+					{
+						var exceptionDetails = extraLogInfo != null ? extraLogInfo() : string.Empty;
+						if( ex.CancellationToken == cancellationToken )
+						{
+							// a real cancellation, triggered by the caller
+							throw new EtsyException( exceptionDetails, ex );
+						}
+
+						// a web request timeout. Can retry
+						throw new EtsyTemporaryException( exceptionDetails, ex );
 					}
 					catch ( Exception exception )
 					{
@@ -53,14 +66,14 @@ namespace EtsyAccess.Models.Throttling
 
 						if ( exception is HttpRequestException 
 							|| exception is EtsyInvalidSignatureException 
-							|| exception is EtsyBadGatewayException )
+							|| exception is EtsyBadGatewayException
+							|| exception is EtsyConflictException )
 							etsyException = new EtsyTemporaryException( exceptionDetails, exception );
 						else
 							etsyException = new EtsyException( exceptionDetails, exception );
 
 						throw etsyException;
 					}
-					
 				});
 		}
 

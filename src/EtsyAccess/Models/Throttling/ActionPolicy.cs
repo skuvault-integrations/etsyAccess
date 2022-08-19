@@ -46,7 +46,7 @@ namespace EtsyAccess.Models.Throttling
 					catch ( TaskCanceledException ex )
 					{
 						var exceptionDetails = extraLogInfo != null ? extraLogInfo() : string.Empty;
-						if( ex.CancellationToken == cancellationToken )
+						if ( ex.CancellationToken == cancellationToken )
 						{
 							// a real cancellation, triggered by the caller
 							throw new EtsyException( exceptionDetails, ex );

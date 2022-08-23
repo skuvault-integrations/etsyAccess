@@ -190,7 +190,7 @@ namespace EtsyAccess.Services.Items
 				var listingInventory = await GetListingInventoryAsync( listing, token, mark ).ConfigureAwait( false );
 
 				if ( listingInventory != null )
-					await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity, token, mark );
+					await UpdateSkuQuantityAsync( listing, listingInventory, sku, quantity, token, mark ).ConfigureAwait( false );
 			}
 		}
 
@@ -232,8 +232,8 @@ namespace EtsyAccess.Services.Items
 			var listing = listings.FirstOrDefault();
 			
 			// get listing's product inventory
-			if (listing != null)
-				listingInventory = await GetListingInventoryAsync( listing, token );
+			if ( listing != null )
+				listingInventory = await GetListingInventoryAsync( listing, token ).ConfigureAwait( false );
 
 			return listingInventory;
 		}

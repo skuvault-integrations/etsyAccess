@@ -51,9 +51,13 @@ namespace EtsyAccess.Services
 
 			HttpClient = new HttpClient()
 			{
-				BaseAddress = new Uri( Config.ApiBaseUrl ),
-				Timeout = TimeSpan.FromMilliseconds( config.RequestTimeoutMs )
+				BaseAddress = new Uri( Config.ApiBaseUrl )
 			};
+
+			if ( config.RequestTimeoutMs > 0 )
+			{
+				HttpClient.Timeout = TimeSpan.FromMilliseconds( config.RequestTimeoutMs );
+			}
 
 			SetSslSettings();
 

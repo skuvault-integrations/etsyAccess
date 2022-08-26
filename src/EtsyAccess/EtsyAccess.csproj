@@ -11,9 +11,9 @@
     <PackageProjectUrl>https://github.com/skuvault-integrations/etsyAccess</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/skuvault-integrations/etsyAccess/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/skuvault-integrations/etsyAccess</RepositoryUrl>
-    <AssemblyVersion>1.7.6.1</AssemblyVersion>
-    <FileVersion>1.7.6.1</FileVersion>
-    <PackageVersion>1.7.6-alpha.1</PackageVersion>
+    <AssemblyVersion>1.7.6.2</AssemblyVersion>
+    <FileVersion>1.7.6.2</FileVersion>
+    <PackageVersion>1.7.6</PackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
